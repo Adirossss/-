@@ -1,0 +1,17 @@
+{
+  "name": "רישום הוצאות Apple Pay",
+  "short_name": "הוצאות",
+  "description": "סימולטור לרישום הוצאות Apple Pay",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101012",
+  "theme_color": "#0a84ff",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

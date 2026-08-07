@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>סימולטור - רישום הוצאות Apple Pay</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a84ff">
+<link rel="icon" href="icon-192.png" type="image/png">
+
+<!-- iOS "Add to Home Screen" support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="הוצאות">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root{
+    --bg-outer:#1c1c1e;
+    --phone-bezel:#0a0a0a;
+    --screen-bg:#000;
+    --card:#1c1c1e;
+    --card2:#2c2c2e;
+    --accent:#0a84ff;
+    --green:#30d158;
+    --red:#ff453a;
+    --text:#ffffff;
+    --text-dim:#8e8e93;
+    --chart-surface:#1a1a19;
+    --chart-muted:#898781;
+    --chart-gridline:#2c2c2a;
+    /* validated categorical palette, dark steps, fixed order — references/palette.md */
+    --series-1:#3987e5; /* blue    */
+    --series-2:#d95926; /* orange  */
+    --series-3:#199e70; /* aqua    */
+    --series-4:#c98500; /* yellow  */
+    --series-5:#d55181; /* magenta */
+    --series-6:#008300; /* green   */
+    /* status palette (fixed, reserved — references/palette.md) */
+    --status-good:#0ca30c;
+    --status-warning:#fab219;
+    --status-critical:#d03b3b;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; min-height:100%;
+    background:radial-gradient(circle at 50% 20%, #2b2b30, #101012 70%);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Arial, sans-serif;
+    color:var(--text);
+    display:flex; align-items:center; justify-content:center;
+    overflow-y:auto; overflow-x:hidden;
+  }
+  .stage{
+    display:flex; align-items:center; justify-content:center;
+    gap:40px; flex-wrap:wrap;
+    padding:24px;
+  }
+
+  /* ---------- Phone frame ---------- */
+  .phone-wrap{
+    flex:0 0 auto;
+  }
+  .phone{
+    width:375px; height:812px;
+    background:var(--phone-bezel);
+    border-radius:55px;
+    padding:14px;
+    box-shadow:0 30px 60px rgba(0,0,0,.6), inset 0 0 0 2px #3a3a3c;
+    position:relative;
+    transform-origin:top center;
+  }
+  .screen{
+    width:100%; height:100%;
+    background:var(--screen-bg);
+    border-radius:42px;
+    overflow:hidden;
+    position:relative;
+    display:flex; flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:150px; height:28px;
+    background:var(--phone-bezel);
+    border-radius:0 0 20px 20px;
+    z-index:50;
+  }
+  .status-bar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 28px 4px;
+    font-size:14px; font-weight:600;
+    z-index:20; position:relative;
+  }
+  .status-icons{display:flex; gap:5px; align-items:center; font-size:13px;}
+
+  /* ---------- Home / lock background ---------- */
+  .home-bg{
+    flex:1;
+    background:linear-gradient(160deg,#2b2540,#141024 60%,#0c0c14);
+    display:flex; flex-direction:column; align-items:center;
+    padding-top:50px;
+    position:relative;
+  }
+  .clock{ text-align:center; margin-top:10px;}
+  .clock .time{ font-size:74px; font-weight:600; letter-spacing:-2px;}
+  .clock .date{ font-size:16px; color:#e5e5ea; margin-top:2px;}
+  .hint{
+    position:absolute; bottom:28px; left:0; right:0;
+    text-align:center; color:#c7c7cc; font-size:13px;
+  }
+
+  /* ---------- Apple Pay banner ---------- */
+  .apay-banner{
+    position:absolute; top:8px; left:10px; right:10px;
+    background:rgba(60,60,63,.85);
+    backdrop-filter:blur(20px);
+    border-radius:20px;
+    padding:12px 14px;
+    display:flex; align-items:center; gap:10px;
+    transform:translateY(-140px);
+    transition:transform .5s cubic-bezier(.2,.9,.3,1.2);
+    z-index:40;
+    cursor:pointer;
+  }
+  .apay-banner.show{ transform:translateY(0); }
+  .apay-icon{
+    width:34px; height:34px; border-radius:9px;
+    background:#000; display:flex; align-items:center; justify-content:center;
+    font-size:16px; flex-shrink:0;
+  }
+  .apay-text{ flex:1; }
+  .apay-text .t1{ font-size:12px; font-weight:700; color:#fff;}
+  .apay-text .t2{ font-size:12px; color:#d1d1d6; margin-top:1px;}
+  .apay-amount{ font-size:15px; font-weight:700; }
+
+  /* ---------- Bottom sheet ---------- */
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0;
+    background:#1c1c1e;
+    border-radius:24px 24px 0 0;
+    padding:18px 18px 28px;
+    transform:translateY(100%);
+    transition:transform .38s cubic-bezier(.2,.9,.3,1);
+    z-index:60;
+    max-height:88%;
+    display:flex; flex-direction:column;
+  }
+  .sheet.show{ transform:translateY(0); }
+  .sheet-handle{
+    width:36px; height:5px; background:#48484a; border-radius:3px;
+    margin:0 auto 14px;
+  }
+  .sheet-close{
+    position:absolute; top:14px; left:16px;
+    width:28px; height:28px; border-radius:50%;
+    background:var(--card2); color:var(--text-dim);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; cursor:pointer; z-index:5;
+  }
+  .sheet h2{ margin:0 0 4px; font-size:19px;}
+  .sheet .sub{ color:var(--text-dim); font-size:13px; margin-bottom:16px;}
+
+  .cat-grid{
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;
+  }
+  .cat-btn{
+    background:var(--card2);
+    border:1px solid #3a3a3c;
+    border-radius:16px;
+    padding:14px 6px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    color:var(--text);
+    font-size:12px;
+    cursor:pointer;
+  }
+  .cat-btn:active{ background:#3a3a3c; }
+  .cat-btn .emoji{ font-size:24px; }
+
+  .amount-step{ display:none; flex-direction:column; }
+  .amount-step.show{ display:flex; }
+  .amount-display{
+    text-align:center; font-size:44px; font-weight:700;
+    margin:18px 0 6px; direction:ltr;
+  }
+  .amount-display .cur{ font-size:22px; color:var(--text-dim); margin-right:4px;}
+  .amount-display.invalid{ color:var(--red); animation:shake .4s; }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-8px); }
+    75%{ transform:translateX(8px); }
+  }
+  .selected-cat{ text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:6px;}
+  .keypad{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+    margin-top:10px;
+  }
+  .key{
+    background:var(--card2); border:none; border-radius:14px;
+    padding:16px 0; font-size:22px; color:var(--text); cursor:pointer;
+  }
+  .key:active{ background:#3a3a3c; }
+  .key.wide{ font-size:16px; }
+  .actions{ display:flex; gap:10px; margin-top:16px; }
+  .btn{
+    flex:1; padding:14px; border-radius:14px; border:none;
+    font-size:16px; font-weight:600; cursor:pointer;
+  }
+  .btn.primary{ background:var(--accent); color:#fff; }
+  .btn.ghost{ background:var(--card2); color:var(--text); }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:absolute; bottom:40px; left:20px; right:20px;
+    background:var(--green); color:#04240f;
+    padding:12px 16px; border-radius:14px;
+    font-size:14px; font-weight:600; text-align:center;
+    opacity:0; transform:translateY(10px);
+    transition:all .3s;
+    z-index:80;
+    pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+
+  /* ---------- Tab bar ---------- */
+  .tabbar{
+    display:flex; background:rgba(28,28,30,.94); backdrop-filter:blur(20px);
+    border-top:1px solid #2c2c2e;
+  }
+  .tab{
+    flex:1; text-align:center; padding:8px 0 10px; color:var(--text-dim);
+    font-size:11px; cursor:pointer;
+  }
+  .tab.active{ color:var(--accent); }
+  .tab .ic{ font-size:20px; display:block; margin-bottom:2px;}
+
+  /* ---------- History view ---------- */
+  .view{ display:none; flex:1; flex-direction:column; overflow:hidden; }
+  .view.active{ display:flex; }
+  .history-header{
+    padding:16px 18px 10px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .history-header h1{ font-size:26px; margin:0; }
+  .gear{ font-size:20px; cursor:pointer; color:var(--text-dim); }
+
+  /* period filter — one row, presets, above the chart */
+  .filter-row{
+    display:flex; gap:6px; padding:0 18px 12px; overflow-x:auto;
+  }
+  .filter-chip{
+    flex:0 0 auto; padding:6px 14px; border-radius:20px;
+    background:var(--card2); color:var(--text-dim); font-size:12.5px;
+    font-weight:600; cursor:pointer; white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .filter-chip.active{ background:rgba(10,132,255,.16); color:var(--accent); border-color:var(--accent); }
+
+  /* part-to-whole stacked bar */
+  .chart-card{
+    margin:0 18px 14px; background:var(--card2); border-radius:16px; padding:14px 16px 16px;
+  }
+  .chart-card .chart-title{ font-size:13px; color:var(--text-dim); margin-bottom:10px; }
+  .stack-bar{
+    display:flex; width:100%; height:22px; border-radius:6px; overflow:hidden;
+    background:var(--chart-gridline);
+  }
+  .stack-seg{
+    height:100%; min-width:3px; cursor:pointer;
+    border-left:2px solid var(--chart-surface);
+    transition:filter .15s, outline .15s;
+  }
+  .stack-seg:first-child{ border-left:none; }
+  .stack-seg.dim{ filter:brightness(.55); }
+  .stack-seg.hi{ outline:2px solid rgba(255,255,255,.8); outline-offset:-2px; }
+  .legend{ margin-top:12px; display:flex; flex-direction:column; gap:2px; }
+  .legend-row{
+    display:flex; align-items:center; gap:10px; padding:7px 4px; border-radius:8px; cursor:pointer;
+  }
+  .legend-row.dim{ opacity:.45; }
+  .legend-swatch{ width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .legend-name{ flex:1; font-size:13.5px; color:var(--text); }
+  .legend-pct{ font-size:12px; color:var(--chart-muted); width:34px; text-align:left; }
+  .legend-amt{ font-size:13.5px; font-weight:700; color:var(--text); direction:ltr; min-width:56px; text-align:left; }
+  .chart-empty{ text-align:center; color:var(--text-dim); font-size:12.5px; padding:14px 0 2px; }
+
+  .budget-card{
+    margin:0 18px 12px; background:var(--card2); border-radius:16px; padding:14px 16px;
+    display:none;
+  }
+  .budget-card.show{ display:block; }
+  .budget-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .budget-title{ font-size:13px; color:var(--text-dim); }
+  .budget-status{ font-size:12px; font-weight:700; display:flex; align-items:center; gap:4px; }
+  .meter-track{
+    width:100%; height:10px; border-radius:5px; background:var(--chart-gridline); overflow:hidden;
+  }
+  .meter-fill{
+    height:100%; border-radius:5px; width:0%;
+    transition:width .35s, background-color .35s;
+  }
+  .budget-nums{
+    display:flex; justify-content:space-between; margin-top:8px;
+    font-size:13px; font-weight:600; direction:ltr;
+  }
+  .budget-nums span:first-child{ color:var(--text); }
+  .budget-nums span:last-child{ color:var(--text-dim); font-weight:500; }
+  .budget-setup-hint{
+    display:none;
+    margin:0 18px 12px; padding:12px 16px; border-radius:16px;
+    background:var(--card2); color:var(--text-dim); font-size:12.5px; text-align:center;
+    cursor:pointer;
+  }
+  .budget-setup-hint.show{ display:block; }
+
+  .total-card{
+    margin:0 18px 12px; background:var(--card2); border-radius:16px; padding:14px 16px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .total-card .label{ color:var(--text-dim); font-size:13px;}
+  .total-card .val{ font-size:22px; font-weight:700;}
+  .list{ flex:1; overflow-y:auto; padding:0 18px 18px; }
+  .row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--card2); border-radius:14px; padding:12px 14px; margin-bottom:8px;
+  }
+  .row .emoji{ font-size:20px; width:30px; text-align:center;}
+  .row .info{ flex:1; }
+  .row .cat{ font-size:14px; font-weight:600;}
+  .row .time{ font-size:11px; color:var(--text-dim); }
+  .row .amt{ font-size:15px; font-weight:700; direction:ltr; }
+  .empty{ text-align:center; color:var(--text-dim); font-size:13px; margin-top:60px; }
+
+  .settings-panel{
+    padding:16px 18px; display:none; flex-direction:column; gap:10px;
+  }
+  .settings-panel.show{ display:flex; }
+  .settings-panel label{ font-size:12px; color:var(--text-dim); }
+  .settings-panel input{
+    background:var(--card2); border:1px solid #3a3a3c; border-radius:10px;
+    padding:10px 12px; color:var(--text); font-size:13px; direction:ltr; text-align:left;
+  }
+  .settings-panel .note{ font-size:11px; color:var(--text-dim); line-height:1.5; }
+
+  /* ---------- External controls ---------- */
+  .side-panel{
+    width:300px; color:#fff;
+  }
+  .side-panel h2{ font-size:18px; margin-bottom:8px;}
+  .side-panel p{ color:#a1a1a6; font-size:13px; line-height:1.6; }
+  .sim-btn{
+    margin-top:14px; width:100%; padding:14px; border-radius:14px; border:none;
+    background:linear-gradient(135deg,#0a84ff,#5e5ce6); color:#fff;
+    font-size:15px; font-weight:700; cursor:pointer;
+  }
+  .sim-btn:active{ opacity:.85; }
+
+  /* floating "+" button — manual way to log an expense from inside the app itself */
+  .fab{
+    position:absolute; left:18px; bottom:86px;
+    width:52px; height:52px; border-radius:50%;
+    background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; font-weight:600; line-height:1;
+    box-shadow:0 6px 16px rgba(0,0,0,.4);
+    cursor:pointer; z-index:45;
+  }
+  .fab:active{ filter:brightness(.9); }
+
+  /* ---------- Real device / installed app: fill the actual screen ---------- */
+  /* on a real phone (or once added to the Home Screen) drop the decorative phone
+     mockup — the device itself already provides the frame, notch and status bar */
+  @media (max-width:480px), (display-mode:standalone){
+    body{ background:var(--screen-bg); }
+    .stage{ padding:0; gap:0; align-items:stretch; min-height:100vh; }
+    .side-panel{ display:none; }
+    .phone-wrap{ width:100% !important; height:100dvh !important; }
+    .phone{
+      width:100%; height:100dvh; border-radius:0; padding:0; box-shadow:none;
+      transform:none !important;
+    }
+    .screen{ border-radius:0; }
+    .notch{ display:none; }
+    .status-bar{ padding-top:calc(env(safe-area-inset-top) + 10px); }
+    .tabbar{ padding-bottom:env(safe-area-inset-bottom); }
+    .fab{ bottom:calc(86px + env(safe-area-inset-bottom)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="phone-wrap" id="phoneWrap">
+  <div class="phone" id="phoneEl">
+    <div class="notch"></div>
+    <div class="screen" id="screen">
+
+      <!-- HOME VIEW -->
+      <div class="view active" id="view-home">
+        <div class="status-bar">
+          <span id="clockTime">9:41</span>
+          <div class="status-icons">
+            <span>📶</span><span>📡</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="home-bg">
+          <div class="apay-banner" id="apayBanner">
+            <div class="apay-icon"> </div>
+            <div class="apay-text">
+              <div class="t1">Wallet</div>
+              <div class="t2">שולם באפל פיי · <span id="bannerMerchant">חנות</span></div>
+            </div>
+            <div class="apay-amount">₪<span id="bannerAmount">0</span></div>
+          </div>
+
+          <div class="clock">
+            <div class="time" id="bigClock">9:41</div>
+            <div class="date">יום שישי, 7 באוגוסט</div>
+          </div>
+
+          <div class="hint">הקש על ההתראה כדי לסווג את ההוצאה</div>
+        </div>
+      </div>
+
+      <!-- HISTORY VIEW -->
+      <div class="view" id="view-history">
+        <div class="status-bar">
+          <span></span>
+          <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+        </div>
+        <div class="history-header">
+          <h1>הוצאות</h1>
+          <span class="gear" id="gearBtn">⚙️</span>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+          <label>תקציב חודשי לבזבוזים (₪)</label>
+          <input id="budgetInput" type="number" min="0" placeholder="למשל 2000" inputmode="decimal">
+          <div class="note">כמה כסף הקצבת לעצמך לבזבוזים החודש. תראה כמה נשאר לך בכרטיסייה "היסטוריה".</div>
+
+          <label style="margin-top:10px;">כתובת ה-Web App של Google Apps Script</label>
+          <input id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+          <div class="note">הדבק כאן את ה-URL שקיבלת מ-Deploy → New deployment בגוגל אפס סקריפט. הרישום יישלח לגיליון בנוסף לתצוגה כאן. אם משאירים ריק, הרישום נשמר רק מקומית בדפדפן.</div>
+          <button class="btn primary" id="saveUrlBtn" style="margin-top:4px;">שמור הגדרות</button>
+        </div>
+
+        <div class="budget-setup-hint" id="budgetHint">💰 עדיין לא הגדרת תקציב חודשי — לחץ כאן כדי להוסיף</div>
+
+        <div class="budget-card" id="budgetCard">
+          <div class="budget-head">
+            <span class="budget-title">תקציב לחודש הנוכחי</span>
+            <span class="budget-status" id="budgetStatus"></span>
+          </div>
+          <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
+          <div class="budget-nums">
+            <span id="budgetSpentLabel">₪0 מתוך ₪0</span>
+            <span id="budgetLeftLabel"></span>
+          </div>
+        </div>
+
+        <div class="filter-row" id="filterRow"></div>
+
+        <div class="total-card">
+          <div>
+            <div class="label" id="totalLabel">סה"כ הוצאות</div>
+            <div class="val">₪<span id="totalAmount">0</span></div>
+          </div>
+          <div style="font-size:26px;">💳</div>
+        </div>
+
+        <div class="chart-card" id="chartCard">
+          <div class="chart-title">התפלגות לפי קטגוריה</div>
+          <div class="stack-bar" id="stackBar"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div class="list" id="historyList">
+          <div class="empty" id="emptyMsg">אין עדיין הוצאות רשומות</div>
+        </div>
+      </div>
+
+      <!-- CATEGORY SHEET -->
+      <div class="sheet" id="catSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-close" id="sheetClose">✕</div>
+
+        <div id="catStep">
+          <h2>לאיזו קטגוריה?</h2>
+          <div class="sub" id="catSub">תשלום Apple Pay זוהה כרגע</div>
+          <div class="cat-grid" id="catGrid"></div>
+          <div class="actions">
+            <button class="btn ghost" id="cancelCat">ביטול</button>
+          </div>
+        </div>
+
+        <div class="amount-step" id="amountStep">
+          <div class="selected-cat" id="selectedCatLabel"></div>
+          <div class="amount-display"><span class="cur">₪</span><span id="amountVal">0</span></div>
+          <div class="keypad" id="keypad"></div>
+          <div class="actions">
+            <button class="btn ghost" id="backToCat">חזרה</button>
+            <button class="btn primary" id="confirmAmount">שמור</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOAST -->
+      <div class="toast" id="toast">נשמר בהצלחה ✓</div>
+
+      <!-- MANUAL ADD -->
+      <div class="fab" id="fabAdd">+</div>
+
+      <!-- TAB BAR -->
+      <div class="tabbar">
+        <div class="tab active" data-tab="home"><span class="ic">🏠</span>בית</div>
+        <div class="tab" data-tab="history"><span class="ic">📊</span>היסטוריה</div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+
+  <div class="side-panel">
+    <h2>סימולציה</h2>
+    <p>מכיוון שדפדפן לא יכול לזהות תשלומי Apple Pay אמיתיים, הכפתור למטה מדמה קבלת התראת תשלום — בדיוק כמו שתהיה לך באוטומציית ה-Shortcuts באייפון האמיתי.</p>
+    <button class="sim-btn" id="simBtn">💳 סימולציה של תשלום Apple Pay</button>
+    <p style="margin-top:18px;">לחץ על ההתראה שתופיע בראש המסך, בחר קטגוריה, הקלד סכום עם המקלדת, ולחץ שמור. הרישום יופיע בטאב "היסטוריה".</p>
+  </div>
+
+</div>
+
+<script>
+  const CATEGORIES = [
+    { key:'אוכל', emoji:'🍔', color:'var(--series-1)' },
+    { key:'בגדים', emoji:'👕', color:'var(--series-2)' },
+    { key:'תספורת', emoji:'💇', color:'var(--series-3)' },
+    { key:'תחבורה', emoji:'🚌', color:'var(--series-4)' },
+    { key:'בילויים', emoji:'🎬', color:'var(--series-5)' },
+    { key:'אחר', emoji:'🧾', color:'var(--series-6)' },
+  ];
+  const MERCHANTS = ['סופר-פארם','שופרסל','קפה גרג','זארה','H&M','דלק פז','וולט'];
+
+  const FILTERS = [
+    { key:'all',   label:'הכל' },
+    { key:'today', label:'היום' },
+    { key:'week',  label:'השבוע' },
+    { key:'month', label:'החודש' },
+  ];
+  let activeFilter = 'all';
+  let highlightedCat = null;
+
+  let state = { category:null, amount:'0', pendingMerchant:'' };
+  let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+
+  const $ = id => document.getElementById(id);
+
+  // clock
+  function tickClock(){
+    const now = new Date();
+    const t = now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    $('clockTime').textContent = t;
+    $('bigClock').textContent = t;
+  }
+  tickClock(); setInterval(tickClock, 15000);
+
+  // build category grid
+  const grid = $('catGrid');
+  CATEGORIES.forEach(c=>{
+    const b = document.createElement('div');
+    b.className='cat-btn';
+    b.innerHTML = `<span class="emoji">${c.emoji}</span><span>${c.key}</span>`;
+    b.onclick = ()=> selectCategory(c);
+    grid.appendChild(b);
+  });
+
+  // build keypad
+  const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','.'];
+  const keypad = $('keypad');
+  keys.forEach(k=>{
+    const b = document.createElement('button');
+    b.className='key' + (k.length>1?' wide':'');
+    b.textContent = k;
+    b.onclick = ()=> pressKey(k);
+    keypad.appendChild(b);
+  });
+
+  function pressKey(k){
+    if(k==='⌫'){
+      state.amount = state.amount.length>1 ? state.amount.slice(0,-1) : '0';
+    } else if(k==='.'){
+      if(!state.amount.includes('.')) state.amount += '.';
+    } else {
+      state.amount = state.amount==='0' ? k : state.amount + k;
+    }
+    $('amountVal').textContent = state.amount;
+  }
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick = ()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      $('view-'+t.dataset.tab).classList.add('active');
+    };
+  });
+
+  // apple pay simulation
+  let bannerHideTimer = null;
+  $('simBtn').onclick = ()=>{
+    document.querySelector('.tab[data-tab="home"]').click();
+    const merchant = MERCHANTS[Math.floor(Math.random()*MERCHANTS.length)];
+    const amount = (Math.random()*180+15).toFixed(2);
+    state.pendingMerchant = merchant;
+    state.pendingAmount = amount;
+    $('bannerMerchant').textContent = merchant;
+    $('bannerAmount').textContent = amount;
+    $('apayBanner').classList.add('show');
+    if(bannerHideTimer) clearTimeout(bannerHideTimer);
+    bannerHideTimer = setTimeout(()=> $('apayBanner').classList.remove('show'), 6000);
+  };
+
+  $('apayBanner').onclick = ()=>{
+    $('apayBanner').classList.remove('show');
+    openSheet();
+  };
+
+  function openSheet(manual){
+    state.category = null;
+    state.amount = state.pendingAmount ? String(state.pendingAmount) : '0';
+    $('catSub').textContent = manual ? 'רישום ידני של הוצאה' : 'תשלום Apple Pay זוהה כרגע';
+    $('catStep').style.display='block';
+    $('amountStep').classList.remove('show');
+    $('catSheet').classList.add('show');
+  }
+  $('fabAdd').onclick = ()=>{
+    state.pendingAmount = null;
+    openSheet(true);
+  };
+  function closeSheet(){
+    $('catSheet').classList.remove('show');
+  }
+  $('cancelCat').onclick = closeSheet;
+
+  function selectCategory(c){
+    state.category = c;
+    $('selectedCatLabel').textContent = `${c.emoji} ${c.key}`;
+    $('amountVal').textContent = state.amount;
+    $('catStep').style.display='none';
+    $('amountStep').classList.add('show');
+  }
+  $('backToCat').onclick = ()=>{
+    $('amountStep').classList.remove('show');
+    $('catStep').style.display='block';
+  };
+
+  $('sheetClose').onclick = closeSheet;
+
+  $('confirmAmount').onclick = async ()=>{
+    try{
+      if(!state.category || !(parseFloat(state.amount) > 0)){
+        const disp = $('amountVal').parentElement;
+        disp.classList.add('invalid');
+        setTimeout(()=> disp.classList.remove('invalid'), 500);
+        return;
+      }
+      const entry = {
+        category: state.category.key,
+        emoji: state.category.emoji,
+        amount: parseFloat(state.amount),
+        time: new Date().toLocaleString('he-IL'),
+        ts: Date.now()
+      };
+      expenses.unshift(entry);
+      localStorage.setItem('expenses', JSON.stringify(expenses));
+      renderHistory();
+      closeSheet();
+      showToast();
+
+      const url = localStorage.getItem('sheetUrl');
+      if(url){
+        try{
+          await fetch(url, {
+            method:'POST',
+            mode:'no-cors',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ category: entry.category, amount: entry.amount })
+          });
+        }catch(err){ console.warn('שליחה לגיליון נכשלה', err); }
+      }
+    }catch(err){
+      console.error('שגיאה בשמירת ההוצאה — לחץ על ✕ כדי לסגור', err);
+      closeSheet();
+    }
+  };
+
+  function showToast(){
+    const t = $('toast');
+    t.classList.add('show');
+    setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+
+  function filteredExpenses(){
+    if(activeFilter==='all') return expenses;
+    const now = new Date();
+    let from;
+    if(activeFilter==='today'){
+      from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    } else if(activeFilter==='week'){
+      const day = (now.getDay()+6)%7; // week starts Monday
+      from = new Date(now.getFullYear(), now.getMonth(), now.getDate()-day).getTime();
+    } else { // month
+      from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    }
+    return expenses.filter(e => (e.ts || Date.now()) >= from);
+  }
+
+  function renderFilters(){
+    const row = $('filterRow');
+    row.innerHTML = '';
+    FILTERS.forEach(f=>{
+      const chip = document.createElement('div');
+      chip.className = 'filter-chip' + (f.key===activeFilter ? ' active' : '');
+      chip.textContent = f.label;
+      chip.onclick = ()=>{ activeFilter = f.key; renderHistory(); };
+      row.appendChild(chip);
+    });
+  }
+
+  function renderHistory(){
+    renderFilters();
+    const items = filteredExpenses();
+
+    const list = $('historyList');
+    list.innerHTML = '';
+    if(items.length===0){
+      list.innerHTML = '<div class="empty" id="emptyMsg">אין הוצאות בתקופה זו</div>';
+    } else {
+      items.forEach(e=>{
+        const row = document.createElement('div');
+        row.className='row';
+        row.innerHTML = `
+          <div class="emoji">${e.emoji}</div>
+          <div class="info">
+            <div class="cat">${e.category}</div>
+            <div class="time">${e.time}</div>
+          </div>
+          <div class="amt">₪${e.amount.toFixed(2)}</div>`;
+        list.appendChild(row);
+      });
+    }
+
+    const total = items.reduce((s,e)=> s+e.amount, 0);
+    $('totalAmount').textContent = total.toFixed(2);
+    $('totalLabel').textContent = 'סה"כ · ' + FILTERS.find(f=>f.key===activeFilter).label;
+
+    renderChart(items, total);
+    renderBudget();
+  }
+
+  function monthSpent(){
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return expenses
+      .filter(e => (e.ts || Date.now()) >= from)
+      .reduce((s,e)=> s+e.amount, 0);
+  }
+
+  function renderBudget(){
+    const budget = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+    const hint = $('budgetHint');
+    const card = $('budgetCard');
+
+    if(budget <= 0){
+      hint.classList.add('show');
+      card.classList.remove('show');
+      return;
+    }
+    hint.classList.remove('show');
+    card.classList.add('show');
+
+    const spent = monthSpent();
+    const ratio = spent / budget;
+    const fill = $('meterFill');
+    fill.style.width = Math.min(ratio, 1) * 100 + '%';
+
+    let color, icon, label;
+    if(ratio < 0.8){ color='var(--status-good)'; icon='✅'; label='בתקציב'; }
+    else if(ratio <= 1){ color='var(--status-warning)'; icon='⚠️'; label='מתקרב לתקציב'; }
+    else { color='var(--status-critical)'; icon='🚨'; label='חריגה מהתקציב'; }
+    fill.style.background = color;
+
+    $('budgetStatus').innerHTML = `<span style="color:${color}">${icon} ${label}</span>`;
+    $('budgetSpentLabel').textContent = `₪${spent.toFixed(2)} מתוך ₪${budget.toFixed(2)}`;
+
+    const remaining = budget - spent;
+    $('budgetLeftLabel').textContent = remaining >= 0
+      ? `נותרו ₪${remaining.toFixed(2)}`
+      : `חריגה של ₪${Math.abs(remaining).toFixed(2)}`;
+  }
+
+  function renderChart(items, total){
+    const stackBar = $('stackBar');
+    const legend = $('legend');
+    const card = $('chartCard');
+    stackBar.innerHTML = '';
+    legend.innerHTML = '';
+
+    if(items.length===0 || total<=0){
+      card.querySelector('.stack-bar').style.display='none';
+      card.querySelector('.legend').innerHTML = '<div class="chart-empty">אין נתונים להצגה</div>';
+      return;
+    }
+    card.querySelector('.stack-bar').style.display='flex';
+
+    // group by category, preserve CATEGORIES' fixed order (categorical hue order)
+    const byCat = {};
+    items.forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + e.amount; });
+    const parts = CATEGORIES
+      .filter(c => byCat[c.key] > 0)
+      .map(c => ({ ...c, amount: byCat[c.key], pct: byCat[c.key]/total*100 }))
+      .sort((a,b)=> b.amount - a.amount);
+
+    parts.forEach(p=>{
+      const seg = document.createElement('div');
+      seg.className = 'stack-seg' + (highlightedCat && highlightedCat!==p.key ? ' dim' : '') + (highlightedCat===p.key ? ' hi' : '');
+      seg.style.width = p.pct + '%';
+      seg.style.background = p.color;
+      seg.title = `${p.key} · ₪${p.amount.toFixed(2)} · ${p.pct.toFixed(0)}%`;
+      seg.onclick = ()=>{ highlightedCat = (highlightedCat===p.key ? null : p.key); renderChart(items, total); };
+      stackBar.appendChild(seg);
+
+      const row = document.createElement('div');
+      row.className = 'legend-row' + (highlightedCat && highlightedCat!==p.key ? ' dim' : '');
+      row.innerHTML = `
+        <div class="legend-swatch" style="background:${p.color}"></div>
+        <div class="legend-name">${p.emoji} ${p.key}</div>
+        <div class="legend-pct">${p.pct.toFixed(0)}%</div>
+        <div class="legend-amt">₪${p.amount.toFixed(2)}</div>`;
+      row.onclick = seg.onclick;
+      legend.appendChild(row);
+    });
+  }
+  renderHistory();
+
+  // quick-log entry point — lets a Shortcut (Back Tap / Action Button) jump
+  // straight to the category sheet via a URL like index.html?add=1
+  if(new URLSearchParams(location.search).get('add') === '1'){
+    openSheet(true);
+  }
+
+  // settings
+  function openSettings(){
+    $('settingsPanel').classList.add('show');
+    $('sheetUrlInput').value = localStorage.getItem('sheetUrl') || '';
+    $('budgetInput').value = localStorage.getItem('monthlyBudget') || '';
+    $('budgetInput').focus();
+  }
+  $('gearBtn').onclick = ()=>{
+    if($('settingsPanel').classList.contains('show')){
+      $('settingsPanel').classList.remove('show');
+    } else {
+      openSettings();
+    }
+  };
+  $('budgetHint').onclick = openSettings;
+  $('saveUrlBtn').onclick = ()=>{
+    localStorage.setItem('sheetUrl', $('sheetUrlInput').value.trim());
+    const budgetVal = parseFloat($('budgetInput').value);
+    if(budgetVal > 0) localStorage.setItem('monthlyBudget', budgetVal);
+    else localStorage.removeItem('monthlyBudget');
+    renderBudget();
+    $('settingsPanel').classList.remove('show');
+    showToast();
+  };
+
+  // scale the phone frame to always fit the window — no page scrolling needed.
+  // on a real phone (or once installed) the CSS media query already makes it
+  // fill the actual screen, so skip the mockup scaling entirely there.
+  const PHONE_W = 375, PHONE_H = 812;
+  function fitPhone(){
+    const isRealDevice = window.matchMedia('(max-width:480px), (display-mode:standalone)').matches;
+    if(isRealDevice){
+      $('phoneEl').style.transform = '';
+      $('phoneWrap').style.width = '';
+      $('phoneWrap').style.height = '';
+      return;
+    }
+    const availH = window.innerHeight - 32;
+    const availW = window.innerWidth - 32;
+    const scale = Math.min(1, availH / PHONE_H, availW / PHONE_W);
+    $('phoneEl').style.transform = `scale(${scale})`;
+    $('phoneWrap').style.width = (PHONE_W * scale) + 'px';
+    $('phoneWrap').style.height = (PHONE_H * scale) + 'px';
+  }
+  fitPhone();
+  window.addEventListener('resize', fitPhone);
+
+  // register service worker so the app installs and works offline as a PWA
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(err=> console.warn('SW registration failed', err));
+    });
+  }
+</script>
+
+</body>
+</html>
