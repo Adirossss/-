@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>הוצאות</title>
 
 <link rel="manifest" href="manifest.json">
@@ -56,7 +56,8 @@
     --glass-bg-strong:rgba(255,255,255,.09);
     --glass-border:rgba(255,255,255,.11);
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;}
+  input, textarea{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
   html,body{
     margin:0; min-height:100%;
     background:radial-gradient(circle at 50% 20%, #2b2b30, #101012 70%);
@@ -494,12 +495,17 @@
      body/.stage switch from flex-centering (which only shrink-wraps its content)
      to plain block boxes so the phone genuinely fills 100% of the real width. */
   @media (max-width:480px), (display-mode:standalone){
-    body{ display:block; background:var(--screen-bg); }
-    .stage{ display:block; width:100%; padding:0; min-height:100vh; min-height:100dvh; }
+    /* position:fixed + inset:0 pins the body exactly to the real visible
+       viewport regardless of iOS's inconsistent 100vh/100dvh handling in
+       standalone mode (the cause of a stray black bar at the bottom) —
+       every descendant below just chains height:100% down from there. */
+    html, body{ height:100%; }
+    body{ display:block; background:var(--screen-bg); position:fixed; inset:0; overflow:hidden; }
+    .stage{ display:block; width:100%; height:100%; padding:0; }
     .side-panel{ display:none; }
-    .phone-wrap{ display:block; width:100%; height:100vh; height:100dvh; }
+    .phone-wrap{ display:block; width:100%; height:100%; }
     .phone{
-      width:100%; height:100vh; height:100dvh; border-radius:0; padding:0; box-shadow:none;
+      width:100%; height:100%; border-radius:0; padding:0; box-shadow:none;
       transform:none !important;
     }
     .screen{ border-radius:0; }
@@ -1604,6 +1610,38 @@
       if(reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
     });
   }
+
+  // iOS Safari sometimes zooms on a fast double-tap (e.g. tapping "0" twice
+  // quickly on the keypad) even with touch-action:manipulation and
+  // user-scalable=no on the viewport — both are meant to prevent this but
+  // iOS doesn't always honor them, especially in standalone/home-screen mode.
+  // Only suppress when both taps hit the SAME element within 300ms (the
+  // exact condition iOS uses to trigger zoom); the default browser click is
+  // blocked along with the zoom, so we re-fire it manually so a fast "00" on
+  // the keypad still registers as two presses instead of being swallowed.
+  let lastTouchEnd = 0, lastTouchTarget = null;
+  document.addEventListener('touchend', e=>{
+    const now = Date.now();
+    const target = e.target;
+    if(now - lastTouchEnd <= 300 && target === lastTouchTarget){
+      e.preventDefault();
+      target.click();
+    }
+    lastTouchEnd = now;
+    lastTouchTarget = target;
+  }, { passive:false });
+
+  // pinch-to-zoom is a separate gesture from double-tap-zoom, handled by
+  // WebKit's own non-standard 'gesture*' events — block those directly so
+  // the app can never be pinch-zoomed like a regular Safari page.
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>
+    document.addEventListener(ev, e=> e.preventDefault())
+  );
+  // also block any two-finger touchmove, which is what actually pans/scales
+  // the page during a pinch (gesture events alone don't stop this on all iOS versions)
+  document.addEventListener('touchmove', e=>{
+    if(e.touches.length > 1) e.preventDefault();
+  }, { passive:false });
 </script>
 
 </body>
