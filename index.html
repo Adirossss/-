@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>סימולטור - רישום הוצאות Apple Pay</title>
+<title>הוצאות</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a84ff">
@@ -14,6 +14,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="הוצאות">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<!-- Rubik: a clean, professional Google Font with full Hebrew + Latin coverage.
+     Falls back to the system font automatically if offline on first load. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg-outer:#1c1c1e;
@@ -40,12 +46,21 @@
     --status-good:#0ca30c;
     --status-warning:#fab219;
     --status-critical:#d03b3b;
+
+    /* neon-glass chrome accents — UI surfaces only, never data */
+    --neon-blue:#0a84ff;
+    --neon-violet:#7c5cff;
+    --neon-cyan:#22d3ee;
+    --neon-grad:linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-violet) 55%, var(--neon-cyan) 100%);
+    --glass-bg:rgba(255,255,255,.055);
+    --glass-bg-strong:rgba(255,255,255,.09);
+    --glass-border:rgba(255,255,255,.11);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{
     margin:0; min-height:100%;
     background:radial-gradient(circle at 50% 20%, #2b2b30, #101012 70%);
-    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Arial, sans-serif;
+    font-family:'Rubik', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Arial, sans-serif;
     color:var(--text);
     display:flex; align-items:center; justify-content:center;
     overflow-y:auto; overflow-x:hidden;
@@ -71,7 +86,11 @@
   }
   .screen{
     width:100%; height:100%;
-    background:var(--screen-bg);
+    background:
+      radial-gradient(120% 55% at 12% -8%, rgba(10,132,255,.32), transparent 60%),
+      radial-gradient(90% 45% at 105% 4%, rgba(124,92,255,.28), transparent 58%),
+      radial-gradient(90% 55% at 50% 115%, rgba(34,211,238,.16), transparent 60%),
+      #050507;
     border-radius:42px;
     overflow:hidden;
     position:relative;
@@ -85,58 +104,27 @@
     z-index:50;
   }
   .status-bar{
-    display:flex; justify-content:space-between; align-items:center;
     padding:16px 28px 4px;
-    font-size:14px; font-weight:600;
     z-index:20; position:relative;
   }
-  .status-icons{display:flex; gap:5px; align-items:center; font-size:13px;}
 
-  /* ---------- Home / lock background ---------- */
-  .home-bg{
-    flex:1;
-    background:linear-gradient(160deg,#2b2540,#141024 60%,#0c0c14);
-    display:flex; flex-direction:column; align-items:center;
-    padding-top:50px;
-    position:relative;
+  /* the whole page (header, budget, chart, list — everything) scrolls together
+     as one unit; the sheet/toast/fab sit outside this element so they stay
+     pinned to the screen regardless of scroll position */
+  .scroll-area{
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; -ms-overflow-style:none;
   }
-  .clock{ text-align:center; margin-top:10px;}
-  .clock .time{ font-size:74px; font-weight:600; letter-spacing:-2px;}
-  .clock .date{ font-size:16px; color:#e5e5ea; margin-top:2px;}
-  .hint{
-    position:absolute; bottom:28px; left:0; right:0;
-    text-align:center; color:#c7c7cc; font-size:13px;
-  }
-
-  /* ---------- Apple Pay banner ---------- */
-  .apay-banner{
-    position:absolute; top:8px; left:10px; right:10px;
-    background:rgba(60,60,63,.85);
-    backdrop-filter:blur(20px);
-    border-radius:20px;
-    padding:12px 14px;
-    display:flex; align-items:center; gap:10px;
-    transform:translateY(-140px);
-    transition:transform .5s cubic-bezier(.2,.9,.3,1.2);
-    z-index:40;
-    cursor:pointer;
-  }
-  .apay-banner.show{ transform:translateY(0); }
-  .apay-icon{
-    width:34px; height:34px; border-radius:9px;
-    background:#000; display:flex; align-items:center; justify-content:center;
-    font-size:16px; flex-shrink:0;
-  }
-  .apay-text{ flex:1; }
-  .apay-text .t1{ font-size:12px; font-weight:700; color:#fff;}
-  .apay-text .t2{ font-size:12px; color:#d1d1d6; margin-top:1px;}
-  .apay-amount{ font-size:15px; font-weight:700; }
+  .scroll-area::-webkit-scrollbar{ width:0; height:0; background:transparent; }
 
   /* ---------- Bottom sheet ---------- */
   .sheet{
     position:absolute; left:0; right:0; bottom:0;
-    background:#1c1c1e;
-    border-radius:24px 24px 0 0;
+    background:rgba(18,18,24,.82);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border-top:1px solid var(--glass-border);
+    border-radius:28px 28px 0 0;
     padding:18px 18px 28px;
     transform:translateY(100%);
     transition:transform .38s cubic-bezier(.2,.9,.3,1);
@@ -146,13 +134,13 @@
   }
   .sheet.show{ transform:translateY(0); }
   .sheet-handle{
-    width:36px; height:5px; background:#48484a; border-radius:3px;
-    margin:0 auto 14px;
+    width:36px; height:5px; background:var(--neon-grad); border-radius:3px;
+    margin:0 auto 14px; opacity:.8;
   }
   .sheet-close{
     position:absolute; top:14px; left:16px;
     width:28px; height:28px; border-radius:50%;
-    background:var(--card2); color:var(--text-dim);
+    background:var(--glass-bg-strong); border:1px solid var(--glass-border); color:var(--text-dim);
     display:flex; align-items:center; justify-content:center;
     font-size:14px; cursor:pointer; z-index:5;
   }
@@ -163,17 +151,34 @@
     display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;
   }
   .cat-btn{
-    background:var(--card2);
-    border:1px solid #3a3a3c;
-    border-radius:16px;
+    background:var(--glass-bg);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--glass-border);
+    border-radius:18px;
     padding:14px 6px;
     display:flex; flex-direction:column; align-items:center; gap:6px;
     color:var(--text);
     font-size:12px;
     cursor:pointer;
+    transition:border-color .15s, background .15s;
   }
-  .cat-btn:active{ background:#3a3a3c; }
+  .cat-btn:active{ background:var(--glass-bg-strong); border-color:rgba(124,92,255,.5); }
   .cat-btn .emoji{ font-size:24px; }
+  .cat-btn.recent{ border-color:rgba(124,92,255,.55); box-shadow:0 0 0 1px rgba(124,92,255,.2); }
+
+  .add-note-toggle{
+    text-align:center; color:var(--text-dim); font-size:12.5px; text-decoration:underline;
+    cursor:pointer; margin-bottom:8px;
+  }
+  .amount-note-field{ display:none; margin-bottom:10px; }
+  .amount-note-field.show{ display:block; }
+  .amount-note-field input{
+    width:100%; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:14px;
+    padding:10px 14px; color:var(--text); font-size:13px; text-align:right;
+  }
+  .amount-note-field input::placeholder{ color:var(--text-dim); }
+  .amount-note-field input:focus{ outline:none; border-color:rgba(124,92,255,.6); }
 
   .amount-step{ display:none; flex-direction:column; }
   .amount-step.show{ display:flex; }
@@ -192,20 +197,30 @@
   .keypad{
     display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
     margin-top:10px;
+    direction:ltr; /* numeric keypad always reads 1-2-3 / 4-5-6 / 7-8-9, like any calculator, regardless of page direction */
   }
   .key{
-    background:var(--card2); border:none; border-radius:14px;
+    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px;
     padding:16px 0; font-size:22px; color:var(--text); cursor:pointer;
   }
-  .key:active{ background:#3a3a3c; }
+  .key:active{ background:var(--glass-bg-strong); border-color:rgba(124,92,255,.5); }
   .key.wide{ font-size:16px; }
   .actions{ display:flex; gap:10px; margin-top:16px; }
   .btn{
-    flex:1; padding:14px; border-radius:14px; border:none;
+    flex:1; padding:14px; border-radius:16px; border:none;
     font-size:16px; font-weight:600; cursor:pointer;
   }
-  .btn.primary{ background:var(--accent); color:#fff; }
-  .btn.ghost{ background:var(--card2); color:var(--text); }
+  .btn.primary{
+    background:var(--neon-grad); color:#fff;
+    box-shadow:0 6px 20px rgba(10,132,255,.35), 0 2px 10px rgba(124,92,255,.3);
+  }
+  .btn.primary:active{ filter:brightness(.92); }
+  .btn.ghost{ background:var(--glass-bg-strong); border:1px solid var(--glass-border); color:var(--text); }
+  .btn.danger{
+    width:100%; margin-top:10px; flex:none;
+    background:rgba(255,69,58,.12); color:var(--red); border:1px solid rgba(255,69,58,.35);
+  }
+  .btn.danger:active{ background:rgba(255,69,58,.2); }
 
   /* ---------- Toast ---------- */
   .toast{
@@ -219,43 +234,68 @@
     pointer-events:none;
   }
   .toast.show{ opacity:1; transform:translateY(0); }
+  .toast-action{ text-decoration:underline; font-weight:800; margin-inline-start:10px; cursor:pointer; pointer-events:auto; }
 
-  /* ---------- Tab bar ---------- */
-  .tabbar{
-    display:flex; background:rgba(28,28,30,.94); backdrop-filter:blur(20px);
-    border-top:1px solid #2c2c2e;
-  }
-  .tab{
-    flex:1; text-align:center; padding:8px 0 10px; color:var(--text-dim);
-    font-size:11px; cursor:pointer;
-  }
-  .tab.active{ color:var(--accent); }
-  .tab .ic{ font-size:20px; display:block; margin-bottom:2px;}
-
-  /* ---------- History view ---------- */
-  .view{ display:none; flex:1; flex-direction:column; overflow:hidden; }
-  .view.active{ display:flex; }
+  /* ---------- Main view ---------- */
   .history-header{
     padding:16px 18px 10px; display:flex; justify-content:space-between; align-items:center;
   }
-  .history-header h1{ font-size:26px; margin:0; }
-  .gear{ font-size:20px; cursor:pointer; color:var(--text-dim); }
+  .history-header h1{
+    flex:1; text-align:center;
+    font-size:24px; margin:0; font-weight:800; letter-spacing:-.3px;
+    background:var(--neon-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  /* both side buttons share the same fixed width so the title between
+     them lands in the true visual center, not just the flex midpoint */
+  .header-btn{
+    font-size:16px; cursor:pointer; color:var(--text-dim);
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .header-btn:active{ background:var(--glass-bg-strong); }
+
+  .search-row{ padding:0 18px 10px; }
+  .search-row input{
+    width:100%; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:14px;
+    padding:10px 14px; color:var(--text); font-size:13px; text-align:right;
+  }
+  .search-row input::placeholder{ color:var(--text-dim); }
+  .search-row input:focus{ outline:none; border-color:rgba(124,92,255,.6); }
 
   /* period filter — one row, presets, above the chart */
   .filter-row{
     display:flex; gap:6px; padding:0 18px 12px; overflow-x:auto;
+    scrollbar-width:none; -ms-overflow-style:none;
   }
+  .filter-row::-webkit-scrollbar{ width:0; height:0; background:transparent; }
   .filter-chip{
     flex:0 0 auto; padding:6px 14px; border-radius:20px;
-    background:var(--card2); color:var(--text-dim); font-size:12.5px;
+    background:var(--glass-bg); color:var(--text-dim); font-size:12.5px;
     font-weight:600; cursor:pointer; white-space:nowrap;
-    border:1px solid transparent;
+    border:1px solid var(--glass-border);
   }
-  .filter-chip.active{ background:rgba(10,132,255,.16); color:var(--accent); border-color:var(--accent); }
+  .filter-chip.active{
+    background:linear-gradient(135deg, rgba(10,132,255,.28), rgba(124,92,255,.28));
+    color:#fff; border-color:rgba(124,92,255,.55);
+    box-shadow:0 0 0 1px rgba(124,92,255,.2), 0 4px 14px rgba(10,132,255,.22);
+  }
+
+  .range-picker{
+    display:none; align-items:center; gap:6px; padding:0 18px 12px;
+  }
+  .range-picker.show{ display:flex; }
+  .range-picker input[type=date]{
+    flex:1; min-width:0; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:12px;
+    padding:8px 10px; color:var(--text); font-size:12.5px; color-scheme:dark;
+  }
+  .range-picker span{ color:var(--text-dim); font-size:12px; }
+  .range-picker .btn{ flex:0 0 auto; padding:8px 14px; font-size:13px; }
 
   /* part-to-whole stacked bar */
   .chart-card{
-    margin:0 18px 14px; background:var(--card2); border-radius:16px; padding:14px 16px 16px;
+    margin:0 18px 14px; background:var(--glass-bg); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--glass-border); border-radius:20px; padding:14px 16px 16px;
   }
   .chart-card .chart-title{ font-size:13px; color:var(--text-dim); margin-bottom:10px; }
   .stack-bar{
@@ -282,7 +322,8 @@
   .chart-empty{ text-align:center; color:var(--text-dim); font-size:12.5px; padding:14px 0 2px; }
 
   .budget-card{
-    margin:0 18px 12px; background:var(--card2); border-radius:16px; padding:14px 16px;
+    margin:0 18px 12px; background:var(--glass-bg); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--glass-border); border-radius:20px; padding:14px 16px;
     display:none;
   }
   .budget-card.show{ display:block; }
@@ -304,27 +345,40 @@
   .budget-nums span:last-child{ color:var(--text-dim); font-weight:500; }
   .budget-setup-hint{
     display:none;
-    margin:0 18px 12px; padding:12px 16px; border-radius:16px;
-    background:var(--card2); color:var(--text-dim); font-size:12.5px; text-align:center;
+    margin:0 18px 12px; padding:12px 16px; border-radius:18px;
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    color:var(--text-dim); font-size:12.5px; text-align:center;
     cursor:pointer;
   }
   .budget-setup-hint.show{ display:block; }
 
   .total-card{
-    margin:0 18px 12px; background:var(--card2); border-radius:16px; padding:14px 16px;
+    margin:0 18px 12px; background:var(--glass-bg); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--glass-border); border-radius:20px; padding:14px 16px;
     display:flex; justify-content:space-between; align-items:center;
   }
   .total-card .label{ color:var(--text-dim); font-size:13px;}
-  .total-card .val{ font-size:22px; font-weight:700;}
-  .list{ flex:1; overflow-y:auto; padding:0 18px 18px; }
-  .row{
-    display:flex; align-items:center; gap:12px;
-    background:var(--card2); border-radius:14px; padding:12px 14px; margin-bottom:8px;
+  .total-card .val{
+    font-size:23px; font-weight:800; direction:ltr; display:inline-block;
+    background:var(--neon-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
   }
+  .month-compare{
+    margin:-4px 18px 12px; padding:0 2px; display:none; align-items:center; gap:6px;
+    font-size:12px; font-weight:700;
+  }
+  .list{ padding:0 18px 90px; }
+  .row{
+    display:flex; align-items:center; gap:12px; cursor:pointer;
+    background:var(--glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--glass-border); border-radius:16px; padding:12px 14px; margin-bottom:8px;
+    transition:background .15s;
+  }
+  .row:active{ background:var(--glass-bg-strong); }
   .row .emoji{ font-size:20px; width:30px; text-align:center;}
   .row .info{ flex:1; }
   .row .cat{ font-size:14px; font-weight:600;}
-  .row .time{ font-size:11px; color:var(--text-dim); }
+  .row .note{ font-size:12px; color:var(--text-dim); margin-top:1px; }
+  .row .time{ font-size:11px; color:var(--text-dim); margin-top:1px; }
   .row .amt{ font-size:15px; font-weight:700; direction:ltr; }
   .empty{ text-align:center; color:var(--text-dim); font-size:13px; margin-top:60px; }
 
@@ -332,12 +386,88 @@
     padding:16px 18px; display:none; flex-direction:column; gap:10px;
   }
   .settings-panel.show{ display:flex; }
+  /* while settings are open, it behaves like its own screen — everything
+     below it (budget, chart, expense list...) is hidden, not just pushed down */
+  .settings-panel.show ~ *{ display:none !important; }
   .settings-panel label{ font-size:12px; color:var(--text-dim); }
-  .settings-panel input{
-    background:var(--card2); border:1px solid #3a3a3c; border-radius:10px;
+  .settings-panel input, .budget-value-btn{
+    background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:12px;
     padding:10px 12px; color:var(--text); font-size:13px; direction:ltr; text-align:left;
   }
+  .settings-panel input:focus{ outline:none; border-color:rgba(124,92,255,.6); }
+  .budget-value-btn{ cursor:pointer; }
+  .budget-value-btn:active{ border-color:rgba(124,92,255,.6); }
   .settings-panel .note{ font-size:11px; color:var(--text-dim); line-height:1.5; }
+  .custom-cat-list{ display:flex; flex-wrap:wrap; gap:6px; }
+  .custom-cat-chip{
+    display:flex; align-items:center; gap:6px; padding:5px 6px 5px 10px; border-radius:14px;
+    background:var(--glass-bg-strong); border:1px solid var(--glass-border); font-size:12px;
+  }
+  .custom-cat-chip .remove{
+    color:var(--red); cursor:pointer; font-weight:700; width:18px; height:18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; background:rgba(255,69,58,.12);
+  }
+  /* custom dropdown — a native <select>'s open popup can't be styled at all,
+     so this is a from-scratch trigger + menu that matches the app's theme */
+  .custom-select{ position:relative; width:100%; }
+  .custom-select-trigger{
+    width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:12px;
+    padding:10px 12px; color:var(--text); font-size:13px; font-family:inherit; cursor:pointer;
+  }
+  .custom-select.open .custom-select-trigger{ border-color:rgba(124,92,255,.6); }
+  .custom-select-value{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .custom-select-chevron{ color:var(--text-dim); font-size:11px; flex-shrink:0; transition:transform .15s; }
+  .custom-select.open .custom-select-chevron{ transform:rotate(180deg); }
+  .custom-select-menu{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:30;
+    max-height:220px; overflow-y:auto;
+    background:rgba(24,24,30,.97); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border:1px solid var(--glass-border); border-radius:14px; padding:6px;
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .custom-select-menu::-webkit-scrollbar{ width:0; height:0; background:transparent; }
+  .custom-select-menu.show{ display:block; }
+  .custom-select-option{
+    padding:10px 12px; border-radius:10px; font-size:13px; cursor:pointer; color:var(--text);
+  }
+  .custom-select-option:active{ background:var(--glass-bg-strong); }
+  .custom-select-option.selected{
+    background:linear-gradient(135deg, rgba(10,132,255,.28), rgba(124,92,255,.28)); color:#fff; font-weight:600;
+  }
+  .recur-list{ margin-top:8px; }
+  .recur-row{
+    display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px;
+    background:var(--glass-bg-strong); border:1px solid var(--glass-border); margin-bottom:6px; font-size:12.5px;
+  }
+  .recur-row .info{ flex:1; }
+  .recur-row .remove{
+    color:var(--red); cursor:pointer; font-weight:700; width:18px; height:18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; background:rgba(255,69,58,.12); flex-shrink:0;
+  }
+  .cat-budget-row{
+    display:flex; align-items:center; gap:10px; padding:8px 2px;
+  }
+  .cat-budget-row .name{ flex:1; font-size:13px; }
+  .cat-budget-row .val{
+    background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:10px;
+    padding:6px 10px; font-size:12.5px; cursor:pointer; direction:ltr; min-width:64px; text-align:center;
+  }
+  .legend-budget-tag{ font-size:11px; font-weight:700; margin-inline-start:6px; }
+
+  .switch{ direction:ltr; position:relative; display:inline-block; width:44px; height:26px; flex-shrink:0; }
+  .switch input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; z-index:1; }
+  .switch-track{
+    position:absolute; inset:0; background:var(--glass-bg-strong);
+    border:1px solid var(--glass-border); border-radius:999px; transition:.2s; pointer-events:none;
+  }
+  .switch-track::before{
+    content:''; position:absolute; height:20px; width:20px; left:2px; top:2px;
+    background:#fff; border-radius:50%; transition:.2s;
+  }
+  .switch input:checked + .switch-track{ background:var(--neon-grad); border-color:transparent; }
+  .switch input:checked + .switch-track::before{ transform:translateX(18px); }
 
   /* ---------- External controls ---------- */
   .side-panel{
@@ -345,42 +475,38 @@
   }
   .side-panel h2{ font-size:18px; margin-bottom:8px;}
   .side-panel p{ color:#a1a1a6; font-size:13px; line-height:1.6; }
-  .sim-btn{
-    margin-top:14px; width:100%; padding:14px; border-radius:14px; border:none;
-    background:linear-gradient(135deg,#0a84ff,#5e5ce6); color:#fff;
-    font-size:15px; font-weight:700; cursor:pointer;
-  }
-  .sim-btn:active{ opacity:.85; }
 
-  /* floating "+" button — manual way to log an expense from inside the app itself */
+  /* floating "+" button — the way to log an expense from inside the app */
   .fab{
-    position:absolute; left:18px; bottom:86px;
+    position:absolute; left:18px; bottom:26px;
     width:52px; height:52px; border-radius:50%;
-    background:var(--accent); color:#fff;
+    background:var(--neon-grad); color:#fff;
     display:flex; align-items:center; justify-content:center;
     font-size:28px; font-weight:600; line-height:1;
-    box-shadow:0 6px 16px rgba(0,0,0,.4);
+    box-shadow:0 8px 22px rgba(10,132,255,.4), 0 3px 12px rgba(124,92,255,.35);
     cursor:pointer; z-index:45;
   }
   .fab:active{ filter:brightness(.9); }
 
   /* ---------- Real device / installed app: fill the actual screen ---------- */
   /* on a real phone (or once added to the Home Screen) drop the decorative phone
-     mockup — the device itself already provides the frame, notch and status bar */
+     mockup — the device itself already provides the frame, notch and status bar.
+     body/.stage switch from flex-centering (which only shrink-wraps its content)
+     to plain block boxes so the phone genuinely fills 100% of the real width. */
   @media (max-width:480px), (display-mode:standalone){
-    body{ background:var(--screen-bg); }
-    .stage{ padding:0; gap:0; align-items:stretch; min-height:100vh; }
+    body{ display:block; background:var(--screen-bg); }
+    .stage{ display:block; width:100%; padding:0; min-height:100vh; min-height:100dvh; }
     .side-panel{ display:none; }
-    .phone-wrap{ width:100% !important; height:100dvh !important; }
+    .phone-wrap{ display:block; width:100%; height:100vh; height:100dvh; }
     .phone{
-      width:100%; height:100dvh; border-radius:0; padding:0; box-shadow:none;
+      width:100%; height:100vh; height:100dvh; border-radius:0; padding:0; box-shadow:none;
       transform:none !important;
     }
     .screen{ border-radius:0; }
     .notch{ display:none; }
     .status-bar{ padding-top:calc(env(safe-area-inset-top) + 10px); }
-    .tabbar{ padding-bottom:env(safe-area-inset-bottom); }
-    .fab{ bottom:calc(86px + env(safe-area-inset-bottom)); }
+    .list{ padding-bottom:calc(90px + env(safe-area-inset-bottom)); }
+    .fab{ bottom:calc(26px + env(safe-area-inset-bottom)); }
   }
 </style>
 </head>
@@ -393,89 +519,105 @@
     <div class="notch"></div>
     <div class="screen" id="screen">
 
-      <!-- HOME VIEW -->
-      <div class="view active" id="view-home">
-        <div class="status-bar">
-          <span id="clockTime">9:41</span>
-          <div class="status-icons">
-            <span>📶</span><span>📡</span><span>🔋</span>
-          </div>
+      <div class="status-bar"></div>
+      <div class="scroll-area" id="scrollArea">
+      <div class="history-header">
+        <span class="header-btn" id="homeBtn">🏠</span>
+        <h1>הוצאות</h1>
+        <span class="header-btn" id="gearBtn">⚙️</span>
+      </div>
+
+      <div class="settings-panel" id="settingsPanel">
+        <label>תקציב חודשי לבזבוזים (₪)</label>
+        <div class="budget-value-btn" id="budgetValueBtn">הגדר תקציב</div>
+        <div class="note">כמה כסף הקצבת לעצמך לבזבוזים החודש. תראה כמה נשאר לך בכרטיסייה "היסטוריה".</div>
+
+        <label style="margin-top:10px;">כתובת ה-Web App של Google Apps Script</label>
+        <input id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+        <div class="note">הדבק כאן את ה-URL שקיבלת מ-Deploy → New deployment בגוגל אפס סקריפט. הרישום יישלח לגיליון בנוסף לתצוגה כאן. אם משאירים ריק, הרישום נשמר רק מקומית בדפדפן.</div>
+        <div class="note" id="pendingSyncStatus" style="display:none; color:var(--status-warning);"></div>
+        <button class="btn primary" id="saveUrlBtn" style="margin-top:4px;">שמור הגדרות</button>
+
+        <label style="margin-top:14px;">קטגוריה מותאמת אישית</label>
+        <div style="display:flex; gap:8px;">
+          <input id="newCatEmoji" placeholder="🎁" maxlength="4" style="width:56px; text-align:center; direction:ltr;">
+          <input id="newCatName" placeholder="שם הקטגוריה" style="flex:1; text-align:right; direction:rtl;">
+        </div>
+        <button class="btn ghost" id="addCatBtn">הוסף קטגוריה</button>
+        <div class="custom-cat-list" id="customCatList" style="margin-top:8px;"></div>
+
+        <label style="margin-top:14px;">הוצאות קבועות (מנויים וכו')</label>
+        <div class="custom-select" id="recurCatSelect"></div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <input id="recurAmount" placeholder="סכום" inputmode="decimal" style="flex:1; text-align:left; direction:ltr;">
+          <div class="custom-select" id="recurDay" style="width:130px;"></div>
+        </div>
+        <input id="recurNote" placeholder="שם (לדוגמה: נטפליקס)" style="margin-top:8px; text-align:right; direction:rtl;">
+        <button class="btn ghost" id="addRecurBtn" style="margin-top:8px;">הוסף הוצאה קבועה</button>
+        <div class="recur-list" id="recurList"></div>
+        <div class="note">בכל חודש, החל מהתאריך שבחרת, ההוצאה הזו תתווסף אוטומטית — לא צריך להזין אותה שוב.</div>
+
+        <label style="margin-top:14px;">תקציב לפי קטגוריה (רשות)</label>
+        <div id="catBudgetList"></div>
+        <div class="note">קובעים תקציב חודשי לקטגוריה ספציפית. ההתקדמות מוצגת ליד הקטגוריה בתרשים "התפלגות לפי קטגוריה".</div>
+
+        <label style="margin-top:14px;">תזכורת יומית</label>
+        <div class="cat-budget-row" style="padding:0;">
+          <span class="name">תזכיר לי אם לא רשמתי הוצאה היום</span>
+          <label class="switch"><input type="checkbox" id="reminderToggle"><span class="switch-track"></span></label>
         </div>
 
-        <div class="home-bg">
-          <div class="apay-banner" id="apayBanner">
-            <div class="apay-icon"> </div>
-            <div class="apay-text">
-              <div class="t1">Wallet</div>
-              <div class="t2">שולם באפל פיי · <span id="bannerMerchant">חנות</span></div>
-            </div>
-            <div class="apay-amount">₪<span id="bannerAmount">0</span></div>
-          </div>
+        <label style="margin-top:14px;">גיבוי נתונים</label>
+        <button class="btn ghost" id="exportBtn">ייצוא כל ההוצאות לקובץ CSV</button>
+        <div class="note">שומר קובץ עם כל ההיסטוריה שלך — טוב כגיבוי, או כדי לפתוח באקסל/Numbers.</div>
+      </div>
 
-          <div class="clock">
-            <div class="time" id="bigClock">9:41</div>
-            <div class="date">יום שישי, 7 באוגוסט</div>
-          </div>
+      <div class="budget-setup-hint" id="budgetHint">💰 עדיין לא הגדרת תקציב חודשי — לחץ כאן כדי להוסיף</div>
 
-          <div class="hint">הקש על ההתראה כדי לסווג את ההוצאה</div>
+      <div class="budget-card" id="budgetCard">
+        <div class="budget-head">
+          <span class="budget-title">תקציב לחודש הנוכחי</span>
+          <span class="budget-status" id="budgetStatus"></span>
+        </div>
+        <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
+        <div class="budget-nums">
+          <span id="budgetSpentLabel">₪0 מתוך ₪0</span>
+          <span id="budgetLeftLabel"></span>
         </div>
       </div>
 
-      <!-- HISTORY VIEW -->
-      <div class="view" id="view-history">
-        <div class="status-bar">
-          <span></span>
-          <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+      <div class="search-row">
+        <input id="searchInput" type="text" placeholder="חיפוש לפי קטגוריה או תיאור...">
+      </div>
+
+      <div class="filter-row" id="filterRow"></div>
+
+      <div class="range-picker" id="rangePicker">
+        <input type="date" id="rangeFrom">
+        <span>—</span>
+        <input type="date" id="rangeTo">
+        <button class="btn primary" id="applyRangeBtn">החל</button>
+      </div>
+
+      <div class="total-card">
+        <div>
+          <div class="label" id="totalLabel">סה"כ הוצאות</div>
+          <div class="val">₪<span id="totalAmount">0</span></div>
         </div>
-        <div class="history-header">
-          <h1>הוצאות</h1>
-          <span class="gear" id="gearBtn">⚙️</span>
-        </div>
+        <div style="font-size:26px;">💳</div>
+      </div>
 
-        <div class="settings-panel" id="settingsPanel">
-          <label>תקציב חודשי לבזבוזים (₪)</label>
-          <input id="budgetInput" type="number" min="0" placeholder="למשל 2000" inputmode="decimal">
-          <div class="note">כמה כסף הקצבת לעצמך לבזבוזים החודש. תראה כמה נשאר לך בכרטיסייה "היסטוריה".</div>
+      <div class="month-compare" id="monthCompare"></div>
 
-          <label style="margin-top:10px;">כתובת ה-Web App של Google Apps Script</label>
-          <input id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-          <div class="note">הדבק כאן את ה-URL שקיבלת מ-Deploy → New deployment בגוגל אפס סקריפט. הרישום יישלח לגיליון בנוסף לתצוגה כאן. אם משאירים ריק, הרישום נשמר רק מקומית בדפדפן.</div>
-          <button class="btn primary" id="saveUrlBtn" style="margin-top:4px;">שמור הגדרות</button>
-        </div>
+      <div class="chart-card" id="chartCard">
+        <div class="chart-title">התפלגות לפי קטגוריה</div>
+        <div class="stack-bar" id="stackBar"></div>
+        <div class="legend" id="legend"></div>
+      </div>
 
-        <div class="budget-setup-hint" id="budgetHint">💰 עדיין לא הגדרת תקציב חודשי — לחץ כאן כדי להוסיף</div>
-
-        <div class="budget-card" id="budgetCard">
-          <div class="budget-head">
-            <span class="budget-title">תקציב לחודש הנוכחי</span>
-            <span class="budget-status" id="budgetStatus"></span>
-          </div>
-          <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
-          <div class="budget-nums">
-            <span id="budgetSpentLabel">₪0 מתוך ₪0</span>
-            <span id="budgetLeftLabel"></span>
-          </div>
-        </div>
-
-        <div class="filter-row" id="filterRow"></div>
-
-        <div class="total-card">
-          <div>
-            <div class="label" id="totalLabel">סה"כ הוצאות</div>
-            <div class="val">₪<span id="totalAmount">0</span></div>
-          </div>
-          <div style="font-size:26px;">💳</div>
-        </div>
-
-        <div class="chart-card" id="chartCard">
-          <div class="chart-title">התפלגות לפי קטגוריה</div>
-          <div class="stack-bar" id="stackBar"></div>
-          <div class="legend" id="legend"></div>
-        </div>
-
-        <div class="list" id="historyList">
-          <div class="empty" id="emptyMsg">אין עדיין הוצאות רשומות</div>
-        </div>
+      <div class="list" id="historyList">
+        <div class="empty" id="emptyMsg">אין עדיין הוצאות רשומות</div>
+      </div>
       </div>
 
       <!-- CATEGORY SHEET -->
@@ -485,7 +627,7 @@
 
         <div id="catStep">
           <h2>לאיזו קטגוריה?</h2>
-          <div class="sub" id="catSub">תשלום Apple Pay זוהה כרגע</div>
+          <div class="sub" id="sheetSub">בחר/י קטגוריה</div>
           <div class="cat-grid" id="catGrid"></div>
           <div class="actions">
             <button class="btn ghost" id="cancelCat">ביטול</button>
@@ -494,12 +636,17 @@
 
         <div class="amount-step" id="amountStep">
           <div class="selected-cat" id="selectedCatLabel"></div>
+          <div class="add-note-toggle" id="addNoteToggle">+ הוסף תיאור</div>
+          <div class="amount-note-field" id="amountNoteWrap">
+            <input id="amountNoteInput" type="text" placeholder="על מה זה היה? (רשות)">
+          </div>
           <div class="amount-display"><span class="cur">₪</span><span id="amountVal">0</span></div>
           <div class="keypad" id="keypad"></div>
           <div class="actions">
             <button class="btn ghost" id="backToCat">חזרה</button>
             <button class="btn primary" id="confirmAmount">שמור</button>
           </div>
+          <button class="btn danger" id="deleteExpense" style="display:none;">מחק הוצאה</button>
         </div>
       </div>
 
@@ -509,21 +656,14 @@
       <!-- MANUAL ADD -->
       <div class="fab" id="fabAdd">+</div>
 
-      <!-- TAB BAR -->
-      <div class="tabbar">
-        <div class="tab active" data-tab="home"><span class="ic">🏠</span>בית</div>
-        <div class="tab" data-tab="history"><span class="ic">📊</span>היסטוריה</div>
-      </div>
-
     </div>
   </div>
   </div>
 
   <div class="side-panel">
-    <h2>סימולציה</h2>
-    <p>מכיוון שדפדפן לא יכול לזהות תשלומי Apple Pay אמיתיים, הכפתור למטה מדמה קבלת התראת תשלום — בדיוק כמו שתהיה לך באוטומציית ה-Shortcuts באייפון האמיתי.</p>
-    <button class="sim-btn" id="simBtn">💳 סימולציה של תשלום Apple Pay</button>
-    <p style="margin-top:18px;">לחץ על ההתראה שתופיע בראש המסך, בחר קטגוריה, הקלד סכום עם המקלדת, ולחץ שמור. הרישום יופיע בטאב "היסטוריה".</p>
+    <h2>רישום הוצאות</h2>
+    <p>אפליקציה לרישום ידני מהיר של הוצאות: קטגוריה, סכום, ותיאור קצר אם רוצים. הנתונים נשמרים בטלפון, ואפשר גם לגבות אוטומטית לגיליון Google מתוך ההגדרות (⚙️).</p>
+    <p style="margin-top:14px;">בטלפון: לחצי על כפתור ה-"+" בתוך האפליקציה כדי לרשום הוצאה בכל רגע.</p>
   </div>
 
 </div>
@@ -537,40 +677,133 @@
     { key:'בילויים', emoji:'🎬', color:'var(--series-5)' },
     { key:'אחר', emoji:'🧾', color:'var(--series-6)' },
   ];
-  const MERCHANTS = ['סופר-פארם','שופרסל','קפה גרג','זארה','H&M','דלק פז','וולט'];
 
   const FILTERS = [
     { key:'all',   label:'הכל' },
     { key:'today', label:'היום' },
     { key:'week',  label:'השבוע' },
     { key:'month', label:'החודש' },
+    { key:'range', label:'טווח מותאם' },
   ];
   let activeFilter = 'all';
+  let customRange = null; // { from:'yyyy-mm-dd', to:'yyyy-mm-dd' }
   let highlightedCat = null;
+  const budgetColor = ratio => ratio < 0.8 ? 'var(--status-good)' : ratio <= 1 ? 'var(--status-warning)' : 'var(--status-critical)';
 
-  let state = { category:null, amount:'0', pendingMerchant:'' };
+  let state = { category:null, amount:'0', note:'' };
+  let editingId = null;
+  let searchQuery = '';
   let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+  let customCategories = JSON.parse(localStorage.getItem('customCategories') || '[]');
+  let lastUsedCategoryKey = localStorage.getItem('lastUsedCategoryKey') || null;
+  let recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses') || '[]');
+  let categoryBudgets = JSON.parse(localStorage.getItem('categoryBudgets') || '{}');
+  let pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]');
+  let recurCatSelectInst = null;
+  let recurDaySelectInst = null;
 
   const $ = id => document.getElementById(id);
+  const allCategories = () => [...CATEGORIES, ...customCategories];
+  const fmtMoney = n => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
 
-  // clock
-  function tickClock(){
-    const now = new Date();
-    const t = now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
-    $('clockTime').textContent = t;
-    $('bigClock').textContent = t;
+  // ---------- IndexedDB mirror ----------
+  // localStorage stays the primary, synchronous source of truth (nothing about
+  // the app's existing logic changes). IndexedDB is an extra, best-effort copy
+  // written alongside it — a second independent place the data also lives, in
+  // case iOS clears localStorage for this site (which does happen for
+  // low-usage sites). On load, if a tracked key is missing from localStorage
+  // but present in IndexedDB, it's restored automatically.
+  const IDB_NAME = 'apayTrackerDB', IDB_STORE = 'kv';
+  const MIRRORED_KEYS = ['expenses','customCategories','monthlyBudget','categoryBudgets','recurringExpenses','lastUsedCategoryKey','sheetUrl'];
+  function idbOpen(){
+    return new Promise((resolve, reject)=>{
+      if(!('indexedDB' in window)) return reject(new Error('no indexedDB'));
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = ()=> req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
   }
-  tickClock(); setInterval(tickClock, 15000);
+  async function idbSet(key, value){
+    try{
+      const db = await idbOpen();
+      db.transaction(IDB_STORE, 'readwrite').objectStore(IDB_STORE).put(value, key);
+    }catch(err){ /* IndexedDB unavailable — localStorage write already happened, so data isn't lost */ }
+  }
+  async function idbDelete(key){
+    try{
+      const db = await idbOpen();
+      db.transaction(IDB_STORE, 'readwrite').objectStore(IDB_STORE).delete(key);
+    }catch(err){}
+  }
+  async function idbGet(key){
+    try{
+      const db = await idbOpen();
+      return await new Promise((resolve, reject)=>{
+        const req = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(key);
+        req.onsuccess = ()=> resolve(req.result);
+        req.onerror = ()=> reject(req.error);
+      });
+    }catch(err){ return undefined; }
+  }
+  function saveKey(key, rawValue){
+    localStorage.setItem(key, rawValue);
+    if(MIRRORED_KEYS.includes(key)) idbSet(key, rawValue);
+  }
+  function removeKey(key){
+    localStorage.removeItem(key);
+    if(MIRRORED_KEYS.includes(key)) idbDelete(key);
+  }
+  async function recoverFromIdbIfNeeded(){
+    let recovered = false;
+    for(const key of MIRRORED_KEYS){
+      if(localStorage.getItem(key) === null){
+        const backup = await idbGet(key);
+        if(backup !== undefined && backup !== null){
+          localStorage.setItem(key, backup);
+          recovered = true;
+        }
+      }
+    }
+    if(!recovered) return;
+    expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    customCategories = JSON.parse(localStorage.getItem('customCategories') || '[]');
+    categoryBudgets = JSON.parse(localStorage.getItem('categoryBudgets') || '{}');
+    recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses') || '[]');
+    lastUsedCategoryKey = localStorage.getItem('lastUsedCategoryKey') || null;
+    buildCatGrid();
+    applyDueRecurring();
+    renderHistory();
+    showToast('שוחזרו נתונים מגיבוי מקומי');
+  }
 
-  // build category grid
-  const grid = $('catGrid');
-  CATEGORIES.forEach(c=>{
-    const b = document.createElement('div');
-    b.className='cat-btn';
-    b.innerHTML = `<span class="emoji">${c.emoji}</span><span>${c.key}</span>`;
-    b.onclick = ()=> selectCategory(c);
-    grid.appendChild(b);
-  });
+  // the most recently used category is bumped to the front of the grid and
+  // highlighted, so the common case is a single tap without hunting for it
+  function orderedCategories(){
+    const cats = allCategories();
+    const idx = cats.findIndex(c => c.key === lastUsedCategoryKey);
+    if(idx <= 0) return cats;
+    const copy = cats.slice();
+    const [recent] = copy.splice(idx, 1);
+    copy.unshift(recent);
+    return copy;
+  }
+
+  // build category grid — rebuilt whenever categories or the "recent" one change
+  function buildCatGrid(){
+    const grid = $('catGrid');
+    grid.innerHTML = '';
+    orderedCategories().forEach(c=>{
+      const b = document.createElement('div');
+      b.className = 'cat-btn' + (c.key === lastUsedCategoryKey ? ' recent' : '');
+      b.innerHTML = `<span class="emoji">${c.emoji}</span><span>${c.key}</span>`;
+      b.onclick = ()=> selectCategory(c);
+      grid.appendChild(b);
+    });
+    populateRecurCatSelect();
+    renderCategoryBudgetList();
+  }
+  buildCatGrid();
 
   // build keypad
   const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','.'];
@@ -594,61 +827,108 @@
     $('amountVal').textContent = state.amount;
   }
 
-  // tabs
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.onclick = ()=>{
-      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-      document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');
-      $('view-'+t.dataset.tab).classList.add('active');
-    };
-  });
+  let sheetMode = 'expense'; // 'expense' | 'budget'
 
-  // apple pay simulation
-  let bannerHideTimer = null;
-  $('simBtn').onclick = ()=>{
-    document.querySelector('.tab[data-tab="home"]').click();
-    const merchant = MERCHANTS[Math.floor(Math.random()*MERCHANTS.length)];
-    const amount = (Math.random()*180+15).toFixed(2);
-    state.pendingMerchant = merchant;
-    state.pendingAmount = amount;
-    $('bannerMerchant').textContent = merchant;
-    $('bannerAmount').textContent = amount;
-    $('apayBanner').classList.add('show');
-    if(bannerHideTimer) clearTimeout(bannerHideTimer);
-    bannerHideTimer = setTimeout(()=> $('apayBanner').classList.remove('show'), 6000);
-  };
-
-  $('apayBanner').onclick = ()=>{
-    $('apayBanner').classList.remove('show');
-    openSheet();
-  };
-
-  function openSheet(manual){
+  function openSheet(entry){
+    sheetMode = 'expense';
+    editingId = entry ? entry.ts : null;
     state.category = null;
-    state.amount = state.pendingAmount ? String(state.pendingAmount) : '0';
-    $('catSub').textContent = manual ? 'רישום ידני של הוצאה' : 'תשלום Apple Pay זוהה כרגע';
+    state.amount = entry ? String(entry.amount) : '0';
+    state.note = entry ? (entry.note || '') : '';
+    $('sheetSub').textContent = entry ? 'בחר/י קטגוריה חדשה או המשיכי לסכום' : 'בחר/י קטגוריה';
+    $('deleteExpense').style.display = entry ? 'block' : 'none';
+    $('backToCat').textContent = 'חזרה';
     $('catStep').style.display='block';
     $('amountStep').classList.remove('show');
     $('catSheet').classList.add('show');
   }
-  $('fabAdd').onclick = ()=>{
-    state.pendingAmount = null;
-    openSheet(true);
+  $('fabAdd').onclick = ()=> openSheet();
+
+  $('addNoteToggle').onclick = ()=>{
+    $('amountNoteWrap').classList.add('show');
+    $('addNoteToggle').style.display = 'none';
+    $('amountNoteInput').focus();
   };
+
+  // budget entry reuses the same amount screen/keypad as an expense, just skips
+  // straight past the category step. an optional categoryKey scopes it to that
+  // category's own budget instead of the overall monthly one.
+  let budgetCategoryKey = null;
+  function openBudgetEntry(categoryKey){
+    sheetMode = 'budget';
+    budgetCategoryKey = categoryKey || null;
+    editingId = null;
+    state.category = null;
+    const current = budgetCategoryKey
+      ? (categoryBudgets[budgetCategoryKey] || 0)
+      : (parseFloat(localStorage.getItem('monthlyBudget')) || 0);
+    state.amount = String(current);
+    $('selectedCatLabel').textContent = budgetCategoryKey
+      ? `תקציב לקטגוריית ${budgetCategoryKey}`
+      : 'תקציב חודשי לבזבוזים';
+    $('amountVal').textContent = state.amount;
+    $('deleteExpense').style.display = 'none';
+    $('addNoteToggle').style.display = 'none';
+    $('amountNoteWrap').classList.remove('show');
+    $('backToCat').textContent = 'ביטול';
+    $('catStep').style.display = 'none';
+    $('amountStep').classList.add('show');
+    $('catSheet').classList.add('show');
+  }
+  $('budgetValueBtn').onclick = ()=> openBudgetEntry();
+  $('budgetHint').onclick = ()=> openBudgetEntry();
+
+  function renderCategoryBudgetList(){
+    const wrap = $('catBudgetList');
+    wrap.innerHTML = '';
+    allCategories().forEach(c=>{
+      const b = categoryBudgets[c.key];
+      const row = document.createElement('div');
+      row.className = 'cat-budget-row';
+      row.innerHTML = `<span class="name">${c.emoji} ${c.key}</span><span class="val">${b > 0 ? '₪'+fmtMoney(b) : 'הגדר'}</span>`;
+      row.querySelector('.val').onclick = ()=> openBudgetEntry(c.key);
+      wrap.appendChild(row);
+    });
+  }
+
   function closeSheet(){
     $('catSheet').classList.remove('show');
+    editingId = null;
+    budgetCategoryKey = null;
+    sheetMode = 'expense';
   }
   $('cancelCat').onclick = closeSheet;
+
+  $('deleteExpense').onclick = ()=>{
+    if(!editingId) return;
+    const idx = expenses.findIndex(e => e.ts === editingId);
+    if(idx === -1) return;
+    const [removed] = expenses.splice(idx, 1);
+    saveKey('expenses', JSON.stringify(expenses));
+    renderHistory();
+    closeSheet();
+    showToast('ההוצאה נמחקה', 'בטל', ()=>{
+      expenses.splice(idx, 0, removed);
+      saveKey('expenses', JSON.stringify(expenses));
+      renderHistory();
+    });
+  };
 
   function selectCategory(c){
     state.category = c;
     $('selectedCatLabel').textContent = `${c.emoji} ${c.key}`;
     $('amountVal').textContent = state.amount;
+    $('amountNoteInput').value = state.note || '';
+    // "אחר" is too vague to stand alone, so its note is shown right away;
+    // other categories keep it tucked behind the toggle unless already set (editing)
+    const expandNote = c.key === 'אחר' || !!state.note;
+    $('amountNoteWrap').classList.toggle('show', expandNote);
+    $('addNoteToggle').style.display = expandNote ? 'none' : 'block';
     $('catStep').style.display='none';
     $('amountStep').classList.add('show');
   }
   $('backToCat').onclick = ()=>{
+    if(sheetMode === 'budget'){ closeSheet(); return; }
     $('amountStep').classList.remove('show');
     $('catStep').style.display='block';
   };
@@ -657,35 +937,72 @@
 
   $('confirmAmount').onclick = async ()=>{
     try{
+      if(sheetMode === 'budget'){
+        const val = parseFloat(state.amount);
+        if(!(val >= 0)){
+          const disp = $('amountVal').parentElement;
+          disp.classList.add('invalid');
+          setTimeout(()=> disp.classList.remove('invalid'), 500);
+          return;
+        }
+        if(budgetCategoryKey){
+          if(val > 0) categoryBudgets[budgetCategoryKey] = val;
+          else delete categoryBudgets[budgetCategoryKey];
+          saveKey('categoryBudgets', JSON.stringify(categoryBudgets));
+          renderCategoryBudgetList();
+          renderChart(filteredExpenses(), filteredExpenses().reduce((s,e)=>s+e.amount,0));
+        } else {
+          if(val > 0) saveKey('monthlyBudget', val);
+          else removeKey('monthlyBudget');
+          refreshBudgetDisplay();
+          renderBudget();
+        }
+        closeSheet();
+        showToast();
+        return;
+      }
+
       if(!state.category || !(parseFloat(state.amount) > 0)){
         const disp = $('amountVal').parentElement;
         disp.classList.add('invalid');
         setTimeout(()=> disp.classList.remove('invalid'), 500);
         return;
       }
-      const entry = {
-        category: state.category.key,
-        emoji: state.category.emoji,
-        amount: parseFloat(state.amount),
-        time: new Date().toLocaleString('he-IL'),
-        ts: Date.now()
-      };
-      expenses.unshift(entry);
-      localStorage.setItem('expenses', JSON.stringify(expenses));
+      const noteVal = $('amountNoteInput').value.trim();
+      const wasEditing = editingId;
+      if(wasEditing){
+        const idx = expenses.findIndex(e => e.ts === editingId);
+        if(idx > -1){
+          expenses[idx] = {
+            ...expenses[idx],
+            category: state.category.key,
+            emoji: state.category.emoji,
+            amount: parseFloat(state.amount),
+            note: noteVal
+          };
+        }
+      } else {
+        expenses.unshift({
+          category: state.category.key,
+          emoji: state.category.emoji,
+          amount: parseFloat(state.amount),
+          note: noteVal,
+          time: new Date().toLocaleString('he-IL'),
+          ts: Date.now()
+        });
+      }
+      lastUsedCategoryKey = state.category.key;
+      saveKey('lastUsedCategoryKey', lastUsedCategoryKey);
+      buildCatGrid();
+      saveKey('expenses', JSON.stringify(expenses));
       renderHistory();
       closeSheet();
       showToast();
 
-      const url = localStorage.getItem('sheetUrl');
-      if(url){
-        try{
-          await fetch(url, {
-            method:'POST',
-            mode:'no-cors',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ category: entry.category, amount: entry.amount })
-          });
-        }catch(err){ console.warn('שליחה לגיליון נכשלה', err); }
+      // editing an existing row only updates it locally — the sheet webhook
+      // just appends rows, so there's no reliable row to update remotely.
+      if(!wasEditing){
+        syncToSheet({ category: state.category.key, amount: parseFloat(state.amount), note: noteVal });
       }
     }catch(err){
       console.error('שגיאה בשמירת ההוצאה — לחץ על ✕ כדי לסגור', err);
@@ -693,26 +1010,52 @@
     }
   };
 
-  function showToast(){
+  let toastTimer = null;
+  function showToast(message, actionLabel, actionFn){
     const t = $('toast');
+    clearTimeout(toastTimer);
+    if(actionLabel && actionFn){
+      t.innerHTML = `${message} <span class="toast-action" id="toastAction">${actionLabel}</span>`;
+      $('toastAction').onclick = ()=>{
+        clearTimeout(toastTimer);
+        t.classList.remove('show');
+        actionFn();
+      };
+    } else {
+      t.textContent = message || 'נשמר בהצלחה ✓';
+    }
     t.classList.add('show');
-    setTimeout(()=> t.classList.remove('show'), 2200);
+    toastTimer = setTimeout(()=> t.classList.remove('show'), actionLabel ? 4500 : 2200);
   }
 
   function filteredExpenses(){
-    if(activeFilter==='all') return expenses;
-    const now = new Date();
-    let from;
-    if(activeFilter==='today'){
-      from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    } else if(activeFilter==='week'){
-      const day = (now.getDay()+6)%7; // week starts Monday
-      from = new Date(now.getFullYear(), now.getMonth(), now.getDate()-day).getTime();
-    } else { // month
-      from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    let items = expenses;
+    if(activeFilter==='range' && customRange){
+      const from = new Date(customRange.from + 'T00:00:00').getTime();
+      const to = new Date(customRange.to + 'T23:59:59.999').getTime();
+      items = items.filter(e => (e.ts || 0) >= from && (e.ts || 0) <= to);
+    } else if(activeFilter!=='all' && activeFilter!=='range'){
+      const now = new Date();
+      let from;
+      if(activeFilter==='today'){
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      } else if(activeFilter==='week'){
+        const day = (now.getDay()+6)%7; // week starts Monday
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate()-day).getTime();
+      } else { // month
+        from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      }
+      items = items.filter(e => (e.ts || Date.now()) >= from);
     }
-    return expenses.filter(e => (e.ts || Date.now()) >= from);
+    if(searchQuery){
+      items = items.filter(e =>
+        e.category.toLowerCase().includes(searchQuery) ||
+        (e.note || '').toLowerCase().includes(searchQuery)
+      );
+    }
+    return items;
   }
+  $('searchInput').oninput = (e)=>{ searchQuery = e.target.value.trim().toLowerCase(); renderHistory(); };
 
   function renderFilters(){
     const row = $('filterRow');
@@ -721,10 +1064,27 @@
       const chip = document.createElement('div');
       chip.className = 'filter-chip' + (f.key===activeFilter ? ' active' : '');
       chip.textContent = f.label;
-      chip.onclick = ()=>{ activeFilter = f.key; renderHistory(); };
+      chip.onclick = ()=>{
+        if(f.key === 'range'){
+          $('rangePicker').classList.toggle('show');
+          return;
+        }
+        activeFilter = f.key;
+        $('rangePicker').classList.remove('show');
+        renderHistory();
+      };
       row.appendChild(chip);
     });
   }
+  $('applyRangeBtn').onclick = ()=>{
+    const from = $('rangeFrom').value;
+    const to = $('rangeTo').value;
+    if(!from || !to) return;
+    customRange = { from, to };
+    activeFilter = 'range';
+    $('rangePicker').classList.remove('show');
+    renderHistory();
+  };
 
   function renderHistory(){
     renderFilters();
@@ -742,19 +1102,22 @@
           <div class="emoji">${e.emoji}</div>
           <div class="info">
             <div class="cat">${e.category}</div>
+            ${e.note ? `<div class="note">${e.note}</div>` : ''}
             <div class="time">${e.time}</div>
           </div>
-          <div class="amt">₪${e.amount.toFixed(2)}</div>`;
+          <div class="amt">₪${fmtMoney(e.amount)}</div>`;
+        row.onclick = ()=> openSheet(e);
         list.appendChild(row);
       });
     }
 
     const total = items.reduce((s,e)=> s+e.amount, 0);
-    $('totalAmount').textContent = total.toFixed(2);
+    $('totalAmount').textContent = fmtMoney(total);
     $('totalLabel').textContent = 'סה"כ · ' + FILTERS.find(f=>f.key===activeFilter).label;
 
     renderChart(items, total);
     renderBudget();
+    renderComparison();
   }
 
   function monthSpent(){
@@ -763,6 +1126,35 @@
     return expenses
       .filter(e => (e.ts || Date.now()) >= from)
       .reduce((s,e)=> s+e.amount, 0);
+  }
+
+  function categoryMonthSpent(key){
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return expenses
+      .filter(e => e.category === key && (e.ts || 0) >= from)
+      .reduce((s,e)=> s+e.amount, 0);
+  }
+
+  function lastMonthSpent(){
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth()-1, 1).getTime();
+    const to = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return expenses
+      .filter(e => (e.ts || 0) >= from && (e.ts || 0) < to)
+      .reduce((s,e)=> s+e.amount, 0);
+  }
+
+  function renderComparison(){
+    const el = $('monthCompare');
+    const thisM = monthSpent();
+    const lastM = lastMonthSpent();
+    if(lastM <= 0){ el.style.display = 'none'; return; }
+    const diffPct = ((thisM - lastM) / lastM) * 100;
+    const up = diffPct >= 0;
+    el.style.display = 'flex';
+    el.style.color = up ? 'var(--status-critical)' : 'var(--status-good)';
+    el.innerHTML = `<span>${up ? '📈' : '📉'}</span><span>${up ? '+' : ''}${diffPct.toFixed(0)}% לעומת החודש שעבר</span>`;
   }
 
   function renderBudget(){
@@ -783,19 +1175,20 @@
     const fill = $('meterFill');
     fill.style.width = Math.min(ratio, 1) * 100 + '%';
 
-    let color, icon, label;
-    if(ratio < 0.8){ color='var(--status-good)'; icon='✅'; label='בתקציב'; }
-    else if(ratio <= 1){ color='var(--status-warning)'; icon='⚠️'; label='מתקרב לתקציב'; }
-    else { color='var(--status-critical)'; icon='🚨'; label='חריגה מהתקציב'; }
+    const color = budgetColor(ratio);
+    let icon, label;
+    if(ratio < 0.8){ icon='✅'; label='בתקציב'; }
+    else if(ratio <= 1){ icon='⚠️'; label='מתקרב לתקציב'; }
+    else { icon='🚨'; label='חריגה מהתקציב'; }
     fill.style.background = color;
 
     $('budgetStatus').innerHTML = `<span style="color:${color}">${icon} ${label}</span>`;
-    $('budgetSpentLabel').textContent = `₪${spent.toFixed(2)} מתוך ₪${budget.toFixed(2)}`;
+    $('budgetSpentLabel').textContent = `₪${fmtMoney(spent)} מתוך ₪${fmtMoney(budget)}`;
 
     const remaining = budget - spent;
     $('budgetLeftLabel').textContent = remaining >= 0
-      ? `נותרו ₪${remaining.toFixed(2)}`
-      : `חריגה של ₪${Math.abs(remaining).toFixed(2)}`;
+      ? `נותרו ₪${fmtMoney(remaining)}`
+      : `חריגה של ₪${fmtMoney(Math.abs(remaining))}`;
   }
 
   function renderChart(items, total){
@@ -812,12 +1205,16 @@
     }
     card.querySelector('.stack-bar').style.display='flex';
 
-    // group by category, preserve CATEGORIES' fixed order (categorical hue order)
+    // group by category name as stored on each expense — not by the live category
+    // list, so a since-deleted custom category still shows up correctly in old history
     const byCat = {};
     items.forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + e.amount; });
-    const parts = CATEGORIES
-      .filter(c => byCat[c.key] > 0)
-      .map(c => ({ ...c, amount: byCat[c.key], pct: byCat[c.key]/total*100 }))
+    const knownCats = allCategories();
+    const parts = Object.keys(byCat)
+      .map(key => {
+        const info = knownCats.find(c => c.key === key) || { emoji:'❔', color:'var(--text-dim)' };
+        return { key, emoji:info.emoji, color:info.color, amount:byCat[key], pct:byCat[key]/total*100 };
+      })
       .sort((a,b)=> b.amount - a.amount);
 
     parts.forEach(p=>{
@@ -825,35 +1222,66 @@
       seg.className = 'stack-seg' + (highlightedCat && highlightedCat!==p.key ? ' dim' : '') + (highlightedCat===p.key ? ' hi' : '');
       seg.style.width = p.pct + '%';
       seg.style.background = p.color;
-      seg.title = `${p.key} · ₪${p.amount.toFixed(2)} · ${p.pct.toFixed(0)}%`;
+      seg.title = `${p.key} · ₪${fmtMoney(p.amount)} · ${p.pct.toFixed(0)}%`;
       seg.onclick = ()=>{ highlightedCat = (highlightedCat===p.key ? null : p.key); renderChart(items, total); };
       stackBar.appendChild(seg);
+
+      const catBudget = categoryBudgets[p.key];
+      let budgetTag = '';
+      if(catBudget > 0){
+        const spent = categoryMonthSpent(p.key);
+        const ratio = spent / catBudget;
+        budgetTag = `<span class="legend-budget-tag" style="color:${budgetColor(ratio)}">· ${Math.round(ratio*100)}% מתקציב</span>`;
+      }
 
       const row = document.createElement('div');
       row.className = 'legend-row' + (highlightedCat && highlightedCat!==p.key ? ' dim' : '');
       row.innerHTML = `
         <div class="legend-swatch" style="background:${p.color}"></div>
-        <div class="legend-name">${p.emoji} ${p.key}</div>
+        <div class="legend-name">${p.emoji} ${p.key} ${budgetTag}</div>
         <div class="legend-pct">${p.pct.toFixed(0)}%</div>
-        <div class="legend-amt">₪${p.amount.toFixed(2)}</div>`;
+        <div class="legend-amt">₪${fmtMoney(p.amount)}</div>`;
       row.onclick = seg.onclick;
       legend.appendChild(row);
     });
   }
+  applyDueRecurring();
   renderHistory();
+  checkDailyReminder();
+  recoverFromIdbIfNeeded();
+  flushPendingSync();
 
   // quick-log entry point — lets a Shortcut (Back Tap / Action Button) jump
   // straight to the category sheet via a URL like index.html?add=1
   if(new URLSearchParams(location.search).get('add') === '1'){
-    openSheet(true);
+    openSheet();
   }
 
   // settings
+  function refreshBudgetDisplay(){
+    const b = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+    $('budgetValueBtn').textContent = b > 0 ? ('₪' + fmtMoney(b)) : 'הגדר תקציב';
+  }
   function openSettings(){
     $('settingsPanel').classList.add('show');
     $('sheetUrlInput').value = localStorage.getItem('sheetUrl') || '';
-    $('budgetInput').value = localStorage.getItem('monthlyBudget') || '';
-    $('budgetInput').focus();
+    $('reminderToggle').checked = localStorage.getItem('dailyReminder') === '1';
+    refreshBudgetDisplay();
+    renderPendingSyncStatus();
+  }
+  $('reminderToggle').onchange = ()=>{
+    localStorage.setItem('dailyReminder', $('reminderToggle').checked ? '1' : '0');
+  };
+
+  // client-side nudge, not a real push notification — true background push on
+  // iOS needs a server to trigger it, which this static site doesn't have.
+  // this just checks on open whether today has a logged expense yet.
+  function checkDailyReminder(){
+    if(localStorage.getItem('dailyReminder') !== '1') return;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const loggedToday = expenses.some(e => (e.ts || 0) >= todayStart);
+    if(!loggedToday) showToast('עוד לא רשמת הוצאה היום 👀');
   }
   $('gearBtn').onclick = ()=>{
     if($('settingsPanel').classList.contains('show')){
@@ -862,16 +1290,266 @@
       openSettings();
     }
   };
-  $('budgetHint').onclick = openSettings;
+  $('homeBtn').onclick = ()=>{
+    $('settingsPanel').classList.remove('show');
+    $('scrollArea').scrollTop = 0;
+  };
   $('saveUrlBtn').onclick = ()=>{
-    localStorage.setItem('sheetUrl', $('sheetUrlInput').value.trim());
-    const budgetVal = parseFloat($('budgetInput').value);
-    if(budgetVal > 0) localStorage.setItem('monthlyBudget', budgetVal);
-    else localStorage.removeItem('monthlyBudget');
-    renderBudget();
+    saveKey('sheetUrl', $('sheetUrlInput').value.trim());
     $('settingsPanel').classList.remove('show');
     showToast();
   };
+
+  // ---------- Google Sheet sync with an offline retry queue ----------
+  // mode:'no-cors' means we can never read the response status (a CORS
+  // limitation of the simple webhook approach), so "success" here really just
+  // means "the request didn't outright fail to send" — a real confirmation
+  // would require adding CORS headers on the Apps Script side.
+  async function syncToSheet(payload){
+    const url = localStorage.getItem('sheetUrl');
+    if(!url) return;
+    if(!navigator.onLine){
+      queueForSync(payload);
+      return;
+    }
+    try{
+      await fetch(url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+    }catch(err){
+      queueForSync(payload);
+    }
+  }
+  function queueForSync(payload){
+    pendingSync.push(payload);
+    localStorage.setItem('pendingSync', JSON.stringify(pendingSync));
+    renderPendingSyncStatus();
+  }
+  async function flushPendingSync(){
+    const url = localStorage.getItem('sheetUrl');
+    if(!url || !pendingSync.length || !navigator.onLine) return;
+    const remaining = [];
+    for(const payload of pendingSync){
+      try{
+        await fetch(url, {
+          method:'POST', mode:'no-cors',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+      }catch(err){
+        remaining.push(payload);
+      }
+    }
+    pendingSync = remaining;
+    localStorage.setItem('pendingSync', JSON.stringify(pendingSync));
+    renderPendingSyncStatus();
+  }
+  function renderPendingSyncStatus(){
+    const el = $('pendingSyncStatus');
+    if(!el) return;
+    if(pendingSync.length){
+      el.style.display = 'block';
+      el.textContent = `⏳ ${pendingSync.length} רשומות ממתינות לסנכרון לגיליון (יישלחו כשתהיה רשת)`;
+    } else {
+      el.style.display = 'none';
+    }
+  }
+  window.addEventListener('online', flushPendingSync);
+
+  function renderCustomCatList(){
+    const wrap = $('customCatList');
+    wrap.innerHTML = '';
+    customCategories.forEach((c, i)=>{
+      const chip = document.createElement('div');
+      chip.className = 'custom-cat-chip';
+      chip.innerHTML = `<span>${c.emoji} ${c.key}</span><span class="remove">✕</span>`;
+      chip.querySelector('.remove').onclick = ()=>{
+        customCategories.splice(i, 1);
+        saveKey('customCategories', JSON.stringify(customCategories));
+        renderCustomCatList();
+        buildCatGrid();
+      };
+      wrap.appendChild(chip);
+    });
+  }
+  renderCustomCatList();
+
+  $('addCatBtn').onclick = ()=>{
+    const name = $('newCatName').value.trim();
+    if(!name) return;
+    const emoji = $('newCatEmoji').value.trim() || '🏷️';
+    const color = `var(--series-${(customCategories.length % 6) + 1})`;
+    customCategories.push({ key:name, emoji, color });
+    saveKey('customCategories', JSON.stringify(customCategories));
+    buildCatGrid();
+    renderCustomCatList();
+    $('newCatEmoji').value = '';
+    $('newCatName').value = '';
+    showToast('הקטגוריה נוספה');
+  };
+
+  // ---------- custom dropdown (a native <select>'s popup can't be themed) ----------
+  function createCustomSelect(container, options, initialValue){
+    let value = initialValue !== undefined ? initialValue : options[0] && options[0].value;
+    container.innerHTML = `
+      <button type="button" class="custom-select-trigger">
+        <span class="custom-select-value"></span>
+        <span class="custom-select-chevron">▾</span>
+      </button>
+      <div class="custom-select-menu"></div>`;
+    const trigger = container.querySelector('.custom-select-trigger');
+    const valueEl = container.querySelector('.custom-select-value');
+    const menu = container.querySelector('.custom-select-menu');
+
+    function updateValueDisplay(){
+      const opt = options.find(o => o.value === value);
+      valueEl.textContent = opt ? opt.label : '';
+    }
+    function renderMenu(){
+      menu.innerHTML = '';
+      options.forEach(opt=>{
+        const item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt.value === value ? ' selected' : '');
+        item.textContent = opt.label;
+        item.onclick = (e)=>{
+          e.stopPropagation();
+          value = opt.value;
+          updateValueDisplay();
+          closeMenu();
+        };
+        menu.appendChild(item);
+      });
+    }
+    function openMenu(){
+      renderMenu();
+      menu.classList.add('show');
+      container.classList.add('open');
+    }
+    function closeMenu(){
+      menu.classList.remove('show');
+      container.classList.remove('open');
+    }
+    trigger.onclick = (e)=>{
+      e.stopPropagation();
+      menu.classList.contains('show') ? closeMenu() : openMenu();
+    };
+    document.addEventListener('click', closeMenu);
+    updateValueDisplay();
+
+    return {
+      getValue: ()=> value,
+      setOptions(newOptions, newValue){
+        options = newOptions;
+        if(newValue !== undefined) value = newValue;
+        else if(!options.some(o => o.value === value)) value = options[0] && options[0].value;
+        updateValueDisplay();
+      }
+    };
+  }
+
+  // ---------- recurring expenses ----------
+  function populateRecurCatSelect(){
+    const opts = allCategories().map(c => ({ value:c.key, label:`${c.emoji} ${c.key}` }));
+    if(recurCatSelectInst) recurCatSelectInst.setOptions(opts);
+    else recurCatSelectInst = createCustomSelect($('recurCatSelect'), opts);
+  }
+  function populateRecurDaySelect(){
+    if(recurDaySelectInst) return;
+    const opts = [];
+    for(let d=1; d<=28; d++) opts.push({ value:d, label:`ה-${d} לחודש` });
+    recurDaySelectInst = createCustomSelect($('recurDay'), opts, 1);
+  }
+  populateRecurDaySelect();
+
+  function renderRecurList(){
+    const wrap = $('recurList');
+    wrap.innerHTML = '';
+    recurringExpenses.forEach((r, i)=>{
+      const row = document.createElement('div');
+      row.className = 'recur-row';
+      row.innerHTML = `<span class="info">${r.emoji} ${r.note || r.category} · ₪${fmtMoney(r.amount)} · ה-${r.day}</span><span class="remove">✕</span>`;
+      row.querySelector('.remove').onclick = ()=>{
+        recurringExpenses.splice(i, 1);
+        saveKey('recurringExpenses', JSON.stringify(recurringExpenses));
+        renderRecurList();
+      };
+      wrap.appendChild(row);
+    });
+  }
+  renderRecurList();
+
+  $('addRecurBtn').onclick = ()=>{
+    const catKey = recurCatSelectInst.getValue();
+    const cat = allCategories().find(c => c.key === catKey);
+    const amount = parseFloat($('recurAmount').value);
+    const day = parseInt(recurDaySelectInst.getValue(), 10);
+    if(!cat || !(amount > 0) || !day) return;
+    recurringExpenses.push({
+      id: Date.now(),
+      category: cat.key,
+      emoji: cat.emoji,
+      amount,
+      note: $('recurNote').value.trim(),
+      day
+    });
+    saveKey('recurringExpenses', JSON.stringify(recurringExpenses));
+    renderRecurList();
+    $('recurAmount').value = '';
+    $('recurNote').value = '';
+    showToast('ההוצאה הקבועה נוספה');
+  };
+
+  // on every load, auto-add any recurring expense whose day-of-month has
+  // arrived and that hasn't already been added this calendar month
+  function applyDueRecurring(){
+    if(!recurringExpenses.length) return;
+    const now = new Date();
+    let added = false;
+    recurringExpenses.forEach(r=>{
+      const already = expenses.some(e=>{
+        if(e.recurringId !== r.id) return false;
+        const d = new Date(e.ts || 0);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      });
+      if(!already && now.getDate() >= r.day){
+        expenses.unshift({
+          category: r.category,
+          emoji: r.emoji,
+          amount: r.amount,
+          note: r.note || '',
+          time: now.toLocaleString('he-IL'),
+          ts: Date.now(),
+          recurringId: r.id
+        });
+        added = true;
+      }
+    });
+    if(added){
+      saveKey('expenses', JSON.stringify(expenses));
+      showToast('נוספו הוצאות קבועות לחודש הזה');
+    }
+  }
+
+  function exportCSV(){
+    const header = ['תאריך', 'קטגוריה', 'סכום', 'תיאור'];
+    const rows = expenses.map(e => [e.time, e.category, e.amount.toFixed(2), e.note || '']);
+    const csv = [header, ...rows]
+      .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+      .join('\r\n');
+    const BOM = String.fromCharCode(0xFEFF);
+    const blob = new Blob([BOM + csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `expenses-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  $('exportBtn').onclick = exportCSV;
 
   // scale the phone frame to always fit the window — no page scrolling needed.
   // on a real phone (or once installed) the CSS media query already makes it
@@ -895,10 +1573,35 @@
   fitPhone();
   window.addEventListener('resize', fitPhone);
 
-  // register service worker so the app installs and works offline as a PWA
+  // register service worker so the app installs and works offline as a PWA.
+  // when a new version has been fetched and is sitting ready, offer a toast
+  // to switch to it instead of silently serving the old cached version forever.
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
-      navigator.serviceWorker.register('sw.js').catch(err=> console.warn('SW registration failed', err));
+      navigator.serviceWorker.register('sw.js').then(reg=>{
+        if(reg.waiting) showUpdateToast(reg);
+        reg.addEventListener('updatefound', ()=>{
+          const fresh = reg.installing;
+          if(!fresh) return;
+          fresh.addEventListener('statechange', ()=>{
+            if(fresh.state === 'installed' && navigator.serviceWorker.controller){
+              showUpdateToast(reg);
+            }
+          });
+        });
+      }).catch(err=> console.warn('SW registration failed', err));
+
+      let reloadedOnce = false;
+      navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+        if(reloadedOnce) return;
+        reloadedOnce = true;
+        window.location.reload();
+      });
+    });
+  }
+  function showUpdateToast(reg){
+    showToast('גרסה חדשה זמינה', 'רענון', ()=>{
+      if(reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
     });
   }
 </script>
