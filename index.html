@@ -1642,22 +1642,12 @@
   window.addEventListener('resize', fitPhone);
 
   // register service worker so the app installs and works offline as a PWA.
-  // when a new version has been fetched and is sitting ready, offer a toast
-  // to switch to it instead of silently serving the old cached version forever.
+  // new versions activate immediately (sw.js calls skipWaiting on its own) and
+  // this reload picks it up — no toast/tap needed, so there's nothing here to
+  // flash on screen before the reload happens.
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
-      navigator.serviceWorker.register('sw.js').then(reg=>{
-        if(reg.waiting) showUpdateToast(reg);
-        reg.addEventListener('updatefound', ()=>{
-          const fresh = reg.installing;
-          if(!fresh) return;
-          fresh.addEventListener('statechange', ()=>{
-            if(fresh.state === 'installed' && navigator.serviceWorker.controller){
-              showUpdateToast(reg);
-            }
-          });
-        });
-      }).catch(err=> console.warn('SW registration failed', err));
+      navigator.serviceWorker.register('sw.js').catch(err=> console.warn('SW registration failed', err));
 
       let reloadedOnce = false;
       navigator.serviceWorker.addEventListener('controllerchange', ()=>{
@@ -1665,11 +1655,6 @@
         reloadedOnce = true;
         window.location.reload();
       });
-    });
-  }
-  function showUpdateToast(reg){
-    showToast('גרסה חדשה זמינה', 'רענון', ()=>{
-      if(reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
     });
   }
 
