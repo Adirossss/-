@@ -19,7 +19,7 @@
      Falls back to the system font automatically if offline on first load. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg-outer:#1c1c1e;
@@ -179,7 +179,11 @@
     transition:border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease);
   }
   .cat-btn:active{ background:var(--glass-bg-strong); border-color:var(--accent); transform:scale(.96); }
-  .cat-btn .emoji{ font-size:24px; }
+  .cat-btn .emoji{
+    font-size:19px; width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--cat-color, var(--text-dim)) 24%, var(--card2));
+  }
   .cat-btn.recent{ border-color:var(--accent); }
 
   .add-note-toggle{
@@ -259,7 +263,7 @@
   }
   .history-header h1{
     flex:1; text-align:center;
-    font-size:28px; margin:0; font-weight:700; letter-spacing:-.4px;
+    font-size:28px; margin:0; font-weight:900; letter-spacing:-.4px;
     color:var(--text);
   }
   /* both side buttons share the same fixed width so the title between
@@ -272,6 +276,15 @@
     transition:transform .15s var(--ease), background .15s var(--ease);
   }
   .header-btn:active{ background:var(--glass-bg-strong); transform:scale(.92); }
+
+  .repeat-chip{
+    display:none; align-items:center; justify-content:center; gap:6px;
+    margin:0 18px 12px; padding:9px 14px; border-radius:12px;
+    background:var(--card); border:1px solid var(--sep);
+    color:var(--text-dim); font-size:12px; font-weight:600; cursor:pointer;
+    transition:transform .15s var(--ease), background .15s var(--ease);
+  }
+  .repeat-chip:active{ background:var(--card2); transform:scale(.98); }
 
   .search-row{ padding:0 18px 10px; }
   .search-row input{
@@ -337,6 +350,7 @@
   .legend-pct{ font-size:12px; color:var(--chart-muted); width:34px; text-align:left; }
   .legend-amt{ font-size:13.5px; font-weight:700; color:var(--text); direction:ltr; min-width:56px; text-align:left; }
   .chart-empty{ text-align:center; color:var(--text-dim); font-size:12.5px; padding:14px 0 2px; }
+  .insight{ margin-top:10px; padding-top:10px; border-top:1px solid var(--sep); font-size:12px; color:var(--text-dim); line-height:1.5; }
 
   /* ---------- Hero card: total + budget ring + comparison, one widget
      instead of three separate boxes stacked on top of each other ---------- */
@@ -355,8 +369,8 @@
   .hero-top{ display:flex; justify-content:space-between; align-items:flex-start; }
   .hero-label{ color:rgba(255,255,255,.75); font-size:13px; }
   .hero-num{
-    font-size:28px; font-weight:800; direction:ltr; display:block; margin-top:2px;
-    color:#fff; letter-spacing:-0.02em;
+    font-size:28px; font-weight:900; direction:ltr; display:block; margin-top:2px;
+    color:#fff; letter-spacing:-0.02em; font-variant-numeric:tabular-nums;
   }
   .hero-budget{
     display:none; align-items:center; gap:12px;
@@ -560,6 +574,23 @@
     .list{ padding-bottom:calc(90px + env(safe-area-inset-bottom)); }
     .fab{ bottom:calc(26px + env(safe-area-inset-bottom)); }
   }
+
+  /* ---------- Printable report (PDF export via the browser's print dialog) ---------- */
+  .print-report{ display:none; }
+  @media print{
+    body *{ visibility:hidden; }
+    .print-report, .print-report *{ visibility:visible; }
+    .print-report{
+      display:block; position:absolute; top:0; right:0; width:100%; padding:24px;
+      background:#fff; color:#000; direction:rtl; font-family:Arial, sans-serif;
+    }
+    .print-report h1{ font-size:20px; margin:0 0 4px; }
+    .print-report h2{ font-size:15px; margin:20px 0 8px; }
+    .print-report .print-meta{ color:#666; font-size:12px; }
+    .print-report .print-total{ font-size:16px; font-weight:700; margin:8px 0 4px; }
+    .print-report table{ width:100%; border-collapse:collapse; font-size:12px; }
+    .print-report td, .print-report th{ border-bottom:1px solid #ccc; padding:6px 4px; text-align:right; }
+  }
 </style>
 </head>
 <body>
@@ -630,6 +661,8 @@
         <label style="margin-top:14px;">גיבוי נתונים</label>
         <button class="btn ghost" id="exportBtn">ייצוא כל ההוצאות לקובץ CSV</button>
         <div class="note">שומר קובץ עם כל ההיסטוריה שלך — טוב כגיבוי, או כדי לפתוח באקסל/Numbers.</div>
+        <button class="btn ghost" id="exportPdfBtn" style="margin-top:8px;">ייצוא דוח PDF (לפי הסינון הנוכחי)</button>
+        <div class="note">פותח את תצוגת ההדפסה — ב-iPhone: אפשר לצבוט להגדלה בתצוגה המקדימה ואז לשתף/לשמור כ-PDF.</div>
       </div>
 
       <div class="hero-card">
@@ -657,6 +690,8 @@
         <div class="hero-compare" id="monthCompare"></div>
       </div>
 
+      <div class="repeat-chip" id="repeatChip"></div>
+
       <div class="search-row">
         <input id="searchInput" type="text" placeholder="חיפוש לפי קטגוריה או תיאור...">
       </div>
@@ -674,6 +709,7 @@
         <div class="chart-title">התפלגות לפי קטגוריה</div>
         <div class="stack-bar" id="stackBar"></div>
         <div class="legend" id="legend"></div>
+        <div class="insight" id="insightText" style="display:none;"></div>
       </div>
 
       <div class="section-head">הוצאות אחרונות</div>
@@ -731,6 +767,8 @@
   </div>
 
 </div>
+
+<div class="print-report" id="printReport"></div>
 
 <script>
   const CATEGORIES = [
@@ -868,6 +906,7 @@
     orderedCategories().forEach(c=>{
       const b = document.createElement('div');
       b.className = 'cat-btn' + (c.key === lastUsedCategoryKey ? ' recent' : '');
+      b.style.setProperty('--cat-color', c.color);
       b.innerHTML = `<span class="emoji">${escapeHtml(c.emoji)}</span><span>${escapeHtml(c.key)}</span>`;
       b.onclick = ()=> selectCategory(c);
       grid.appendChild(b);
@@ -1191,12 +1230,55 @@
     }
 
     const total = items.reduce((s,e)=> s+e.amount, 0);
-    $('totalAmount').textContent = fmtMoney(total);
+    animateTotal(total);
     $('totalLabel').textContent = 'סה"כ · ' + FILTERS.find(f=>f.key===activeFilter).label;
 
     renderChart(items, total);
+    renderInsight(items);
     renderBudget();
     renderComparison();
+    renderRepeatChip();
+  }
+
+  // a small automatic observation instead of making the user dig for it —
+  // only shown once there's enough data in the current filter to say something real
+  function renderInsight(items){
+    const el = $('insightText');
+    if(items.length < 3){ el.style.display = 'none'; return; }
+    const byCat = {};
+    items.forEach(e=> byCat[e.category] = (byCat[e.category]||0) + e.amount);
+    const top = Object.entries(byCat).sort((a,b)=> b[1]-a[1])[0];
+    if(!top){ el.style.display = 'none'; return; }
+    const [catKey, amt] = top;
+    const oldestTs = Math.min(...items.map(e=> e.ts || Date.now()));
+    const weeks = Math.max(1, (Date.now() - oldestTs) / (7 * 86400000));
+    const perWeek = amt / weeks;
+    el.style.display = 'block';
+    el.textContent = `💡 בממוצע אתה מוציא ₪${fmtMoney(perWeek)} על ${catKey} בשבוע`;
+  }
+
+  // counts up/down from whatever's currently shown rather than jumping — a
+  // small, cheap moment of feedback on every add/delete/filter change
+  let displayedTotal = 0;
+  function animateTotal(newTotal){
+    const el = $('totalAmount');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduceMotion || Math.abs(newTotal - displayedTotal) < 0.01){
+      el.textContent = fmtMoney(newTotal);
+      displayedTotal = newTotal;
+      return;
+    }
+    const start = displayedTotal;
+    const startTime = performance.now();
+    const duration = 400;
+    function step(now){
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = fmtMoney(start + (newTotal - start) * eased);
+      if(t < 1) requestAnimationFrame(step);
+      else displayedTotal = newTotal;
+    }
+    requestAnimationFrame(step);
   }
 
   function monthSpent(){
@@ -1234,6 +1316,37 @@
     el.style.display = 'flex';
     el.style.color = up ? 'var(--status-critical)' : 'var(--status-good)';
     el.innerHTML = `<span>${up ? '📈' : '📉'}</span><span>${up ? '+' : ''}${diffPct.toFixed(0)}% לעומת החודש שעבר</span>`;
+  }
+
+  // one-tap re-add of the most recent expense — the common case of buying
+  // the same thing again shouldn't require the whole category/amount flow
+  function renderRepeatChip(){
+    const chip = $('repeatChip');
+    if(!expenses.length){ chip.style.display = 'none'; return; }
+    const last = expenses[0];
+    chip.style.display = 'flex';
+    chip.innerHTML = `<span>🔁 חזור על: ${escapeHtml(last.emoji)} ${escapeHtml(last.category)} · ₪${fmtMoney(last.amount)}</span>`;
+    chip.onclick = ()=> repeatLastExpense(last);
+  }
+  function repeatLastExpense(last){
+    const entry = {
+      category: last.category, emoji: last.emoji, amount: last.amount,
+      note: last.note || '', time: new Date().toLocaleString('he-IL'), ts: Date.now()
+    };
+    expenses.unshift(entry);
+    lastUsedCategoryKey = entry.category;
+    saveKey('lastUsedCategoryKey', lastUsedCategoryKey);
+    buildCatGrid();
+    saveKey('expenses', JSON.stringify(expenses));
+    renderHistory();
+    showToast('נוספה הוצאה', 'בטל', ()=>{
+      const idx = expenses.findIndex(e => e.ts === entry.ts);
+      if(idx > -1) expenses.splice(idx, 1);
+      saveKey('expenses', JSON.stringify(expenses));
+      renderHistory();
+    });
+    const token = localStorage.getItem('syncToken');
+    syncToSheet({ category: entry.category, amount: entry.amount, note: entry.note, ...(token ? { token } : {}) });
   }
 
   function renderBudget(){
@@ -1638,6 +1751,31 @@
     URL.revokeObjectURL(url);
   }
   $('exportBtn').onclick = exportCSV;
+
+  // no PDF library needed — a print-only stylesheet plus window.print() lets
+  // iOS Safari's own print preview save/share the page as a real PDF
+  function exportPDF(){
+    const items = filteredExpenses();
+    const total = items.reduce((s,e)=> s+e.amount, 0);
+    const byCat = {};
+    items.forEach(e=> byCat[e.category] = (byCat[e.category]||0) + e.amount);
+    const catRows = Object.entries(byCat).sort((a,b)=> b[1]-a[1])
+      .map(([k,v])=> `<tr><td>${escapeHtml(k)}</td><td>₪${fmtMoney(v)}</td></tr>`).join('');
+    const expRows = items.map(e=>
+      `<tr><td>${escapeHtml(e.time)}</td><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.note||'')}</td><td>₪${fmtMoney(e.amount)}</td></tr>`
+    ).join('');
+    $('printReport').innerHTML = `
+      <h1>דוח הוצאות</h1>
+      <div class="print-meta">${FILTERS.find(f=>f.key===activeFilter).label} · הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
+      <div class="print-total">סה"כ: ₪${fmtMoney(total)}</div>
+      <h2>לפי קטגוריה</h2>
+      <table>${catRows}</table>
+      <h2>כל ההוצאות (${items.length})</h2>
+      <table><tr><th>תאריך</th><th>קטגוריה</th><th>תיאור</th><th>סכום</th></tr>${expRows}</table>
+    `;
+    window.print();
+  }
+  $('exportPdfBtn').onclick = exportPDF;
 
   // scale the phone frame to always fit the window — no page scrolling needed.
   // on a real phone (or once installed) the CSS media query already makes it
