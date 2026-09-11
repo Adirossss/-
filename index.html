@@ -494,7 +494,7 @@
      mockup — the device itself already provides the frame, notch and status bar.
      body/.stage switch from flex-centering (which only shrink-wraps its content)
      to plain block boxes so the phone genuinely fills 100% of the real width. */
-  @media (max-width:480px), (display-mode:standalone){
+  @media (max-width:480px), (display-mode:standalone), (hover:none) and (pointer:coarse){
     /* position:fixed + inset:0 pins the body exactly to the real visible
        viewport regardless of iOS's inconsistent 100vh/100dvh handling in
        standalone mode (the cause of a stray black bar at the bottom) —
@@ -541,6 +541,10 @@
         <label style="margin-top:10px;">כתובת ה-Web App של Google Apps Script</label>
         <input id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
         <div class="note">הדבק כאן את ה-URL שקיבלת מ-Deploy → New deployment בגוגל אפס סקריפט. הרישום יישלח לגיליון בנוסף לתצוגה כאן. אם משאירים ריק, הרישום נשמר רק מקומית בדפדפן.</div>
+
+        <label style="margin-top:10px;">קוד סודי לאימות (רשות, מומלץ)</label>
+        <input id="syncTokenInput" placeholder="בחר/י מחרוזת סודית משלך" style="direction:ltr; text-align:left;">
+        <div class="note">כתובת ה-Web App לבדה אינה סיסמה — מי שמשיג אותה יכול לשלוח נתונים מזויפים לגיליון שלך. אם ממלאים כאן קוד, הוא יישלח עם כל בקשה; צריך גם להוסיף בדיקה תואמת בצד ה-Apps Script (בקשו ממני את הקוד המתאים אם תרצו).</div>
         <div class="note" id="pendingSyncStatus" style="display:none; color:var(--status-warning);"></div>
         <button class="btn primary" id="saveUrlBtn" style="margin-top:4px;">שמור הגדרות</button>
 
@@ -711,6 +715,11 @@
   const $ = id => document.getElementById(id);
   const allCategories = () => [...CATEGORIES, ...customCategories];
   const fmtMoney = n => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  // every value below comes from the user (custom category name/emoji, expense
+  // note) and later gets interpolated into innerHTML template strings — without
+  // this, typing something like <img src=x onerror=...> as a note would run as
+  // real HTML/JS the next time that row renders (stored XSS via local data).
+  const escapeHtml = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
   // ---------- IndexedDB mirror ----------
   // localStorage stays the primary, synchronous source of truth (nothing about
@@ -720,7 +729,7 @@
   // low-usage sites). On load, if a tracked key is missing from localStorage
   // but present in IndexedDB, it's restored automatically.
   const IDB_NAME = 'apayTrackerDB', IDB_STORE = 'kv';
-  const MIRRORED_KEYS = ['expenses','customCategories','monthlyBudget','categoryBudgets','recurringExpenses','lastUsedCategoryKey','sheetUrl'];
+  const MIRRORED_KEYS = ['expenses','customCategories','monthlyBudget','categoryBudgets','recurringExpenses','lastUsedCategoryKey','sheetUrl','syncToken'];
   function idbOpen(){
     return new Promise((resolve, reject)=>{
       if(!('indexedDB' in window)) return reject(new Error('no indexedDB'));
@@ -802,7 +811,7 @@
     orderedCategories().forEach(c=>{
       const b = document.createElement('div');
       b.className = 'cat-btn' + (c.key === lastUsedCategoryKey ? ' recent' : '');
-      b.innerHTML = `<span class="emoji">${c.emoji}</span><span>${c.key}</span>`;
+      b.innerHTML = `<span class="emoji">${escapeHtml(c.emoji)}</span><span>${escapeHtml(c.key)}</span>`;
       b.onclick = ()=> selectCategory(c);
       grid.appendChild(b);
     });
@@ -891,7 +900,7 @@
       const b = categoryBudgets[c.key];
       const row = document.createElement('div');
       row.className = 'cat-budget-row';
-      row.innerHTML = `<span class="name">${c.emoji} ${c.key}</span><span class="val">${b > 0 ? '₪'+fmtMoney(b) : 'הגדר'}</span>`;
+      row.innerHTML = `<span class="name">${escapeHtml(c.emoji)} ${escapeHtml(c.key)}</span><span class="val">${b > 0 ? '₪'+fmtMoney(b) : 'הגדר'}</span>`;
       row.querySelector('.val').onclick = ()=> openBudgetEntry(c.key);
       wrap.appendChild(row);
     });
@@ -1008,7 +1017,8 @@
       // editing an existing row only updates it locally — the sheet webhook
       // just appends rows, so there's no reliable row to update remotely.
       if(!wasEditing){
-        syncToSheet({ category: state.category.key, amount: parseFloat(state.amount), note: noteVal });
+        const token = localStorage.getItem('syncToken');
+        syncToSheet({ category: state.category.key, amount: parseFloat(state.amount), note: noteVal, ...(token ? { token } : {}) });
       }
     }catch(err){
       console.error('שגיאה בשמירת ההוצאה — לחץ על ✕ כדי לסגור', err);
@@ -1105,11 +1115,11 @@
         const row = document.createElement('div');
         row.className='row';
         row.innerHTML = `
-          <div class="emoji">${e.emoji}</div>
+          <div class="emoji">${escapeHtml(e.emoji)}</div>
           <div class="info">
-            <div class="cat">${e.category}</div>
-            ${e.note ? `<div class="note">${e.note}</div>` : ''}
-            <div class="time">${e.time}</div>
+            <div class="cat">${escapeHtml(e.category)}</div>
+            ${e.note ? `<div class="note">${escapeHtml(e.note)}</div>` : ''}
+            <div class="time">${escapeHtml(e.time)}</div>
           </div>
           <div class="amt">₪${fmtMoney(e.amount)}</div>`;
         row.onclick = ()=> openSheet(e);
@@ -1244,7 +1254,7 @@
       row.className = 'legend-row' + (highlightedCat && highlightedCat!==p.key ? ' dim' : '');
       row.innerHTML = `
         <div class="legend-swatch" style="background:${p.color}"></div>
-        <div class="legend-name">${p.emoji} ${p.key} ${budgetTag}</div>
+        <div class="legend-name">${escapeHtml(p.emoji)} ${escapeHtml(p.key)} ${budgetTag}</div>
         <div class="legend-pct">${p.pct.toFixed(0)}%</div>
         <div class="legend-amt">₪${fmtMoney(p.amount)}</div>`;
       row.onclick = seg.onclick;
@@ -1271,6 +1281,7 @@
   function openSettings(){
     $('settingsPanel').classList.add('show');
     $('sheetUrlInput').value = localStorage.getItem('sheetUrl') || '';
+    $('syncTokenInput').value = localStorage.getItem('syncToken') || '';
     $('reminderToggle').checked = localStorage.getItem('dailyReminder') === '1';
     refreshBudgetDisplay();
     renderPendingSyncStatus();
@@ -1302,6 +1313,7 @@
   };
   $('saveUrlBtn').onclick = ()=>{
     saveKey('sheetUrl', $('sheetUrlInput').value.trim());
+    saveKey('syncToken', $('syncTokenInput').value.trim());
     $('settingsPanel').classList.remove('show');
     showToast();
   };
@@ -1370,7 +1382,7 @@
     customCategories.forEach((c, i)=>{
       const chip = document.createElement('div');
       chip.className = 'custom-cat-chip';
-      chip.innerHTML = `<span>${c.emoji} ${c.key}</span><span class="remove">✕</span>`;
+      chip.innerHTML = `<span>${escapeHtml(c.emoji)} ${escapeHtml(c.key)}</span><span class="remove">✕</span>`;
       chip.querySelector('.remove').onclick = ()=>{
         customCategories.splice(i, 1);
         saveKey('customCategories', JSON.stringify(customCategories));
@@ -1475,7 +1487,7 @@
     recurringExpenses.forEach((r, i)=>{
       const row = document.createElement('div');
       row.className = 'recur-row';
-      row.innerHTML = `<span class="info">${r.emoji} ${r.note || r.category} · ₪${fmtMoney(r.amount)} · ה-${r.day}</span><span class="remove">✕</span>`;
+      row.innerHTML = `<span class="info">${escapeHtml(r.emoji)} ${escapeHtml(r.note || r.category)} · ₪${fmtMoney(r.amount)} · ה-${r.day}</span><span class="remove">✕</span>`;
       row.querySelector('.remove').onclick = ()=>{
         recurringExpenses.splice(i, 1);
         saveKey('recurringExpenses', JSON.stringify(recurringExpenses));
@@ -1538,11 +1550,18 @@
     }
   }
 
+  // Excel/Numbers/Sheets treat a cell starting with =, +, -, or @ as a formula
+  // to evaluate — a category/note containing something like "=cmd|calc" could
+  // otherwise run as a live formula the moment the exported file is opened.
+  const sanitizeCsvField = v => {
+    const s = String(v);
+    return /^[=+\-@]/.test(s) ? `'${s}` : s;
+  };
   function exportCSV(){
     const header = ['תאריך', 'קטגוריה', 'סכום', 'תיאור'];
     const rows = expenses.map(e => [e.time, e.category, e.amount.toFixed(2), e.note || '']);
     const csv = [header, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+      .map(r => r.map(v => `"${sanitizeCsvField(v).replace(/"/g,'""')}"`).join(','))
       .join('\r\n');
     const BOM = String.fromCharCode(0xFEFF);
     const blob = new Blob([BOM + csv], { type:'text/csv;charset=utf-8;' });
