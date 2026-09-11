@@ -115,6 +115,15 @@
   }
   .scroll-area::-webkit-scrollbar{ width:0; height:0; background:transparent; }
 
+  /* a modal surface pairs with a dimming scrim behind it — makes clear the
+     background is temporarily inert, and doubles as a tap-to-dismiss target */
+  .sheet-scrim{
+    position:absolute; inset:0; background:rgba(0,0,0,.5);
+    opacity:0; pointer-events:none; transition:opacity .3s var(--ease);
+    z-index:55;
+  }
+  .sheet-scrim.show{ opacity:1; pointer-events:auto; }
+
   /* ---------- Bottom sheet ---------- */
   .sheet{
     position:absolute; left:0; right:0; bottom:0;
@@ -488,6 +497,16 @@
   }
   .fab:active{ opacity:.8; transform:scale(.94); }
 
+  /* reduced motion means gentler feedback, not none — press/selection states
+     (background, opacity, color) stay; only the sliding/scaling movement drops */
+  @media (prefers-reduced-motion: reduce){
+    .sheet{ transition:opacity .2s ease; }
+    .sheet:not(.show){ opacity:0; }
+    .sheet.show{ opacity:1; transform:none; }
+    .cat-btn:active, .key:active, .row:active, .filter-chip:active,
+    .header-btn:active, .fab:active, .btn.primary:active{ transform:none; }
+  }
+
   /* ---------- Real device / installed app: fill the actual screen ---------- */
   /* on a real phone (or once added to the Home Screen) drop the decorative phone
      mockup — the device itself already provides the frame, notch and status bar.
@@ -628,6 +647,8 @@
         <div class="empty" id="emptyMsg">אין עדיין הוצאות רשומות</div>
       </div>
       </div>
+
+      <div class="sheet-scrim" id="sheetScrim"></div>
 
       <!-- CATEGORY SHEET -->
       <div class="sheet" id="catSheet">
@@ -855,6 +876,7 @@
     $('catStep').style.display='block';
     $('amountStep').classList.remove('show');
     $('catSheet').classList.add('show');
+    $('sheetScrim').classList.add('show');
   }
   $('fabAdd').onclick = ()=> openSheet();
 
@@ -888,6 +910,7 @@
     $('catStep').style.display = 'none';
     $('amountStep').classList.add('show');
     $('catSheet').classList.add('show');
+    $('sheetScrim').classList.add('show');
   }
   $('budgetValueBtn').onclick = ()=> openBudgetEntry();
   $('budgetHint').onclick = ()=> openBudgetEntry();
@@ -907,10 +930,12 @@
 
   function closeSheet(){
     $('catSheet').classList.remove('show');
+    $('sheetScrim').classList.remove('show');
     editingId = null;
     budgetCategoryKey = null;
     sheetMode = 'expense';
   }
+  $('sheetScrim').onclick = closeSheet;
   $('cancelCat').onclick = closeSheet;
 
   $('deleteExpense').onclick = ()=>{
