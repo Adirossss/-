@@ -260,7 +260,7 @@
      them lands in the true visual center, not just the flex midpoint */
   .header-btn{
     font-size:16px; cursor:pointer; color:var(--text-dim);
-    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
     background:var(--glass-bg); border:1px solid var(--glass-border);
     display:flex; align-items:center; justify-content:center;
     transition:transform .15s var(--ease), background .15s var(--ease);
@@ -368,15 +368,22 @@
   .budget-setup-hint.show{ display:block; }
 
   .total-card{
-    margin:0 18px 12px; background:var(--glass-bg);
-    border:1px solid var(--glass-border); border-radius:16px; padding:14px 16px;
+    margin:0 18px 12px;
+    background:linear-gradient(135deg, #3a3f6b 0%, #5b3a63 55%, #7a3f52 100%);
+    position:relative; overflow:hidden;
+    border-radius:16px; padding:14px 16px;
     display:flex; justify-content:space-between; align-items:center;
-    box-shadow:0 2px 10px rgba(0,0,0,.3);
+    box-shadow:0 4px 16px rgba(0,0,0,.4);
   }
-  .total-card .label{ color:var(--text-dim); font-size:13px;}
+  .total-card::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(120% 90% at 90% -20%, rgba(255,255,255,.22), transparent 60%);
+  }
+  .total-card > *{ position:relative; }
+  .total-card .label{ color:rgba(255,255,255,.75); font-size:13px;}
   .total-card .val{
     font-size:23px; font-weight:700; direction:ltr; display:inline-block;
-    color:var(--accent); letter-spacing:-0.01em;
+    color:#fff; letter-spacing:-0.01em;
   }
   .month-compare{
     margin:-4px 18px 12px; padding:0 2px; display:none; align-items:center; gap:6px;
@@ -385,8 +392,9 @@
   .list{ padding:0 18px 90px; }
   .row{
     display:flex; align-items:center; gap:12px; cursor:pointer;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border); border-radius:14px; padding:12px 14px; margin-bottom:8px;
+    background:color-mix(in srgb, var(--cat-color, transparent) 16%, var(--glass-bg));
+    border:1px solid color-mix(in srgb, var(--cat-color, transparent) 35%, var(--glass-border));
+    border-radius:14px; padding:12px 14px; margin-bottom:8px;
     transition:background .15s var(--ease), transform .15s var(--ease);
   }
   .row:active{ background:var(--glass-bg-strong); transform:scale(.98); }
@@ -565,9 +573,13 @@
       <div class="status-bar"></div>
       <div class="scroll-area" id="scrollArea">
       <div class="history-header">
-        <span class="header-btn" id="homeBtn">🏠</span>
+        <span class="header-btn" id="homeBtn" role="button" aria-label="מסך הבית">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+        </span>
         <h1>הוצאות</h1>
-        <span class="header-btn" id="gearBtn">⚙️</span>
+        <span class="header-btn" id="gearBtn" role="button" aria-label="הגדרות">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
       </div>
 
       <div class="settings-panel" id="settingsPanel">
@@ -651,7 +663,7 @@
           <div class="label" id="totalLabel">סה"כ הוצאות</div>
           <div class="val">₪<span id="totalAmount">0</span></div>
         </div>
-        <div style="font-size:26px;">💳</div>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
       </div>
 
       <div class="month-compare" id="monthCompare"></div>
@@ -672,7 +684,7 @@
       <!-- CATEGORY SHEET -->
       <div class="sheet" id="catSheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-close" id="sheetClose">✕</div>
+        <div class="sheet-close" id="sheetClose" role="button" aria-label="סגור">✕</div>
 
         <div id="catStep">
           <h2>לאיזו קטגוריה?</h2>
@@ -703,7 +715,7 @@
       <div class="toast" id="toast">נשמר בהצלחה ✓</div>
 
       <!-- MANUAL ADD -->
-      <div class="fab" id="fabAdd">+</div>
+      <div class="fab" id="fabAdd" role="button" aria-label="הוסף הוצאה">+</div>
 
     </div>
   </div>
@@ -753,6 +765,9 @@
 
   const $ = id => document.getElementById(id);
   const allCategories = () => [...CATEGORIES, ...customCategories];
+  // looks up by the category name stored on the expense, not the live list, so
+  // history for a since-deleted custom category still gets a sensible tint
+  const categoryColor = key => (allCategories().find(c => c.key === key) || {}).color || 'var(--text-dim)';
   const fmtMoney = n => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
   // every value below comes from the user (custom category name/emoji, expense
   // note) and later gets interpolated into innerHTML template strings — without
@@ -1157,6 +1172,7 @@
       items.forEach(e=>{
         const row = document.createElement('div');
         row.className='row';
+        row.style.setProperty('--cat-color', categoryColor(e.category));
         row.innerHTML = `
           <div class="emoji">${escapeHtml(e.emoji)}</div>
           <div class="info">
@@ -1425,7 +1441,7 @@
     customCategories.forEach((c, i)=>{
       const chip = document.createElement('div');
       chip.className = 'custom-cat-chip';
-      chip.innerHTML = `<span>${escapeHtml(c.emoji)} ${escapeHtml(c.key)}</span><span class="remove">✕</span>`;
+      chip.innerHTML = `<span>${escapeHtml(c.emoji)} ${escapeHtml(c.key)}</span><span class="remove" role="button" aria-label="מחק קטגוריה ${escapeHtml(c.key)}">✕</span>`;
       chip.querySelector('.remove').onclick = ()=>{
         customCategories.splice(i, 1);
         saveKey('customCategories', JSON.stringify(customCategories));
@@ -1530,7 +1546,7 @@
     recurringExpenses.forEach((r, i)=>{
       const row = document.createElement('div');
       row.className = 'recur-row';
-      row.innerHTML = `<span class="info">${escapeHtml(r.emoji)} ${escapeHtml(r.note || r.category)} · ₪${fmtMoney(r.amount)} · ה-${r.day}</span><span class="remove">✕</span>`;
+      row.innerHTML = `<span class="info">${escapeHtml(r.emoji)} ${escapeHtml(r.note || r.category)} · ₪${fmtMoney(r.amount)} · ה-${r.day}</span><span class="remove" role="button" aria-label="מחק הוצאה קבועה">✕</span>`;
       row.querySelector('.remove').onclick = ()=>{
         recurringExpenses.splice(i, 1);
         saveKey('recurringExpenses', JSON.stringify(recurringExpenses));
