@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="אפליקציה אישית לרישום הוצאות בשתי נגיעות. הכל נשמר בטלפון, עובדת גם בלי אינטרנט, ויושבת על מסך הבית כמו אפליקציה רגילה.">
+<meta name="theme-color" content="#08080A">
+<link rel="icon" href="../icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+
+<!-- link preview for WhatsApp / Telegram / iMessage — absolute URLs are
+     required here, relative ones are ignored by every scraper -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="רישום הוצאות">
+<meta property="og:title" content="רישום הוצאות Apple Pay">
+<meta property="og:description" content="כמה באמת יצא לי החודש? אפליקציה אישית לרישום הוצאות בשתי נגיעות — בלי הרשמה, בלי מנוי, ישר על מסך הבית.">
+<meta property="og:url" content="https://adirossss.github.io/-/promo/">
+<meta property="og:image" content="https://adirossss.github.io/-/icon-512.png">
+<meta name="twitter:card" content="summary">
+
+<style>
+  /* the Artifact host supplies these; a standalone page has to declare them */
+  html{ color-scheme:dark; }
+  body{ margin:0; font:14px system-ui, sans-serif; background:#08080A; }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+</style>
+<title>רישום הוצאות Apple Pay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Assistant:wght@300;400;600;800&family=Rubik:wght@400;500;600;700;800&display=swap">
+<!-- QR is drawn locally on a canvas — no image is fetched from anywhere, so the
+     code still renders if the page is opened offline or from a saved copy. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<style>
+:root{
+  /* committed single visual world: an OLED phone in a dark room.
+     the product itself is black-only, so a light variant would fight it. */
+  --ink:#08080A;
+  --ink-raised:#141419;
+  --ink-sunken:#0D0D11;
+  --line:#26262E;
+  --line-soft:#1B1B22;
+  --chalk:#F2F0F4;
+  --haze:#9A98A6;
+  --haze-dim:#6B6975;
+  --signal:#0A84FF;
+  --signal-soft:rgba(10,132,255,.14);
+  --good:#30D158;
+  --warn:#FAB219;
+  --bad:#FF453A;
+
+  /* the one bold spend — the app's own summary-card gradient */
+  --dusk-1:#3A3F6B;
+  --dusk-2:#5B3A63;
+  --dusk-3:#7A3F52;
+
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ease-drawer:cubic-bezier(.32,.72,0,1);
+
+  --display:'Suez One', 'Assistant', Georgia, serif;
+  --body:'Assistant', -apple-system, 'Segoe UI', Arial, sans-serif;
+  --ui:'Rubik', -apple-system, 'Segoe UI', Arial, sans-serif;
+}
+
+body{ background:var(--ink); color:var(--chalk); }
+
+.page{
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.65;
+  background:var(--ink);
+  color:var(--chalk);
+  overflow-x:hidden;
+}
+.page *{ box-sizing:border-box; }
+
+.wrap{
+  max-width:1080px;
+  margin:0 auto;
+  padding:0 24px;
+}
+
+h1,h2,h3{ font-family:var(--display); font-weight:400; text-wrap:balance; margin:0; line-height:1.18; }
+
+.eyebrow{
+  font-family:var(--body);
+  font-size:12px; font-weight:800;
+  letter-spacing:.16em;
+  color:var(--haze-dim);
+  text-transform:uppercase;
+  margin:0;
+}
+
+/* ============ HERO ============ */
+.hero{
+  position:relative;
+  padding:64px 0 40px;
+  isolation:isolate;
+}
+/* ambient bloom — the app's gradient, heavily diffused, as the room's only light */
+.bloom{
+  position:absolute; inset:auto 0 0 0;
+  top:-120px; height:820px;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(46% 34% at 30% 26%, rgba(58,63,107,.50), transparent 68%),
+    radial-gradient(38% 30% at 18% 44%, rgba(122,63,82,.34), transparent 66%),
+    radial-gradient(30% 24% at 44% 12%, rgba(91,58,99,.30), transparent 70%);
+  filter:blur(14px);
+  animation:drift 22s var(--ease) infinite alternate;
+}
+@keyframes drift{
+  from{ transform:translate3d(0,0,0) scale(1); }
+  to  { transform:translate3d(3%,-2%,0) scale(1.08); }
+}
+
+.hero-grid{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:56px;
+  align-items:center;
+}
+
+.hero-copy{ max-width:30ch; }
+.hero h1{
+  font-size:clamp(38px,5.4vw,62px);
+  letter-spacing:-.01em;
+  margin:14px 0 0;
+}
+.hero h1 .lit{
+  background:linear-gradient(105deg,#C9A6E0 0%, #E2A5A5 52%, #F2C9A8 100%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+}
+.hero .lede{
+  font-size:19px;
+  color:var(--haze);
+  font-weight:300;
+  margin:18px 0 0;
+  max-width:34ch;
+}
+.hero .lede b{ color:var(--chalk); font-weight:600; }
+
+.cta-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; align-items:center; }
+.btn{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--body); font-size:15.5px; font-weight:800;
+  padding:13px 22px;
+  border-radius:13px;
+  text-decoration:none;
+  border:1px solid transparent;
+  transition:transform .28s var(--ease), box-shadow .28s var(--ease), background .2s linear, border-color .2s linear;
+}
+.btn-primary{
+  background:var(--signal); color:#fff;
+  box-shadow:0 6px 26px rgba(10,132,255,.34);
+}
+.btn-primary:hover{ transform:translateY(-2px); box-shadow:0 12px 34px rgba(10,132,255,.46); }
+.btn-ghost{
+  background:transparent; color:var(--chalk);
+  border-color:var(--line);
+}
+.btn-ghost:hover{ border-color:#3D3D48; background:rgba(255,255,255,.035); transform:translateY(-2px); }
+.btn:focus-visible{ outline:2px solid var(--signal); outline-offset:3px; }
+
+.hero-meta{
+  display:flex; gap:22px; flex-wrap:wrap;
+  margin-top:30px; padding-top:22px;
+  border-top:1px solid var(--line-soft);
+  font-size:13.5px; color:var(--haze-dim);
+}
+.hero-meta b{ color:var(--haze); font-weight:600; }
+
+/* load orchestration — every step ends visible */
+.rise{ animation:rise .9s var(--ease) both; }
+.d1{ animation-delay:.05s } .d2{ animation-delay:.15s } .d3{ animation-delay:.26s } .d4{ animation-delay:.37s } .d5{ animation-delay:.48s }
+@keyframes rise{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
+
+/* ============ PHONE ============ */
+.phone-col{ display:flex; flex-direction:column; align-items:center; gap:16px; }
+.phone{
+  /* 318 × 700 keeps the real iPhone's 2.16 aspect ratio, and leaves the list
+     enough room that the floating "+" never lands on top of a row */
+  width:318px; height:700px;
+  flex:0 0 auto;
+  background:#0A0A0A;
+  border-radius:48px;
+  padding:11px;
+  box-shadow:
+    0 0 0 2px #34343C inset,
+    0 40px 80px rgba(0,0,0,.72),
+    0 0 90px rgba(91,58,99,.30);
+  position:relative;
+  animation:phoneIn 1.1s var(--ease) .2s both;
+}
+@keyframes phoneIn{ from{ opacity:0; transform:translateY(30px) rotateX(6deg); } to{ opacity:1; transform:none; } }
+
+.screen{
+  width:100%; height:100%;
+  border-radius:38px;
+  overflow:hidden;
+  position:relative;
+  display:flex; flex-direction:column;
+  font-family:var(--ui);
+  background:
+    radial-gradient(120% 38% at 50% 0%, rgba(58,63,107,.35), transparent 60%),
+    radial-gradient(100% 32% at 88% 6%, rgba(122,63,82,.22), transparent 55%),
+    #000;
+  direction:rtl;
+}
+.notch{
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:126px; height:24px; background:#0A0A0A;
+  border-radius:0 0 17px 17px; z-index:50;
+}
+.statusbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:13px 22px 2px; font-size:11px; font-weight:600; color:#fff;
+  direction:ltr; z-index:20;
+}
+.batt{ display:inline-block; width:20px; height:10px; border:1px solid rgba(255,255,255,.6); border-radius:3px; position:relative; }
+.batt::after{ content:''; position:absolute; inset:1.5px; right:6px; background:#fff; border-radius:1px; }
+
+.app-scroll{ flex:1; overflow:hidden; padding:8px 14px 82px; }
+
+/* summary card — the product's real gradient, at full strength, once */
+.app-hero{
+  border-radius:22px;
+  padding:16px 16px 14px;
+  background:linear-gradient(135deg, var(--dusk-1) 0%, var(--dusk-2) 55%, var(--dusk-3) 100%);
+  box-shadow:0 10px 28px rgba(0,0,0,.45);
+}
+.ah-label{ font-size:11px; font-weight:500; color:rgba(255,255,255,.72); letter-spacing:.02em; }
+.ah-total{
+  font-size:36px; font-weight:800; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; margin-top:2px; line-height:1.1;
+}
+.ah-total .cur{ font-size:22px; font-weight:600; opacity:.8; margin-left:2px; }
+.bud-bar{
+  height:6px; border-radius:99px; background:rgba(0,0,0,.30);
+  margin-top:14px; overflow:hidden;
+}
+.bud-bar i{
+  display:block; height:100%; width:41.3%;
+  background:#fff; border-radius:99px;
+  transition:width 1s var(--ease);
+}
+.bud-meta{
+  display:flex; justify-content:space-between;
+  font-size:10.5px; font-weight:500; color:rgba(255,255,255,.75);
+  margin-top:7px; font-variant-numeric:tabular-nums;
+}
+
+.sec-title{
+  font-size:11.5px; font-weight:600; color:#8E8E93;
+  margin:18px 2px 8px; letter-spacing:.01em;
+}
+
+.dist{ display:flex; flex-direction:column; gap:9px; }
+.dist-row{ display:flex; align-items:center; gap:8px; font-size:11.5px; }
+.dist-row .nm{ width:56px; color:#D6D6DB; font-weight:500; }
+.dist-row .track{ flex:1; height:7px; border-radius:99px; background:#1A1A19; overflow:hidden; }
+.dist-row .track i{ display:block; height:100%; border-radius:99px; transition:width .8s var(--ease); }
+.dist-row .vl{ width:46px; text-align:left; color:#898781; font-variant-numeric:tabular-nums; }
+
+.list{ display:flex; flex-direction:column; gap:7px; }
+.row{
+  display:flex; align-items:center; gap:10px;
+  background:#1C1C1E; border-radius:14px; padding:9px 11px;
+}
+.row .chip{
+  width:32px; height:32px; border-radius:10px; flex:0 0 auto;
+  display:grid; place-items:center; font-size:15px;
+}
+.row .txt{ flex:1; min-width:0; }
+.row .t1{ font-size:13px; font-weight:600; color:#fff; }
+.row .t2{ font-size:10.5px; color:#8E8E93; margin-top:1px; }
+.row .amt{ font-size:13.5px; font-weight:700; font-variant-numeric:tabular-nums; color:#fff; }
+.row.fresh{ animation:land .55s var(--ease) both; }
+@keyframes land{
+  0%{ opacity:0; transform:translateY(-14px) scale(.96); }
+  60%{ opacity:1; }
+  100%{ opacity:1; transform:none; }
+}
+
+/* FAB */
+.fab{
+  position:absolute; bottom:20px; left:18px;
+  width:52px; height:52px; border-radius:50%;
+  background:var(--signal); color:#fff;
+  display:grid; place-items:center;
+  font-size:28px; font-weight:400; line-height:1;
+  box-shadow:0 8px 22px rgba(10,132,255,.5);
+  z-index:30;
+  transition:transform .3s var(--ease);
+}
+.fab.tapped{ transform:scale(.86); }
+
+/* bottom sheet */
+.sheet{
+  position:absolute; inset:auto 0 0 0; z-index:40;
+  background:rgba(28,28,30,.98);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-radius:22px 22px 0 0;
+  border-top:1px solid rgba(84,84,88,.65);
+  padding:10px 14px 18px;
+  transform:translateY(102%);
+  transition:transform .52s var(--ease-drawer);
+}
+.sheet.open{ transform:translateY(0); }
+.grab{ width:36px; height:4px; border-radius:99px; background:#48484A; margin:0 auto 10px; }
+.sheet h4{ font-size:12px; font-weight:600; color:#8E8E93; margin:0 2px 9px; }
+.catgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.cat{
+  background:#2C2C2E; border-radius:13px; padding:9px 4px;
+  text-align:center; font-size:10.5px; font-weight:500; color:#D6D6DB;
+  border:1.5px solid transparent;
+  transition:border-color .25s var(--ease), background .25s var(--ease), transform .25s var(--ease);
+}
+.cat em{ display:block; font-style:normal; font-size:19px; margin-bottom:2px; }
+.cat.on{ border-color:var(--signal); background:var(--signal-soft); color:#fff; transform:scale(1.04); }
+
+.amt-display{
+  text-align:center; font-size:34px; font-weight:800;
+  font-variant-numeric:tabular-nums; margin:14px 0 10px; letter-spacing:-.02em;
+}
+.amt-display .cur{ font-size:21px; font-weight:600; color:#8E8E93; margin-left:3px; }
+.keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.key{
+  background:#2C2C2E; border-radius:11px; padding:9px 0;
+  text-align:center; font-size:18px; font-weight:500; color:#fff;
+  transition:background .16s linear, transform .16s var(--ease);
+}
+.key.hit{ background:#48484A; transform:scale(.93); }
+.save-btn{
+  margin-top:9px; background:var(--signal); color:#fff;
+  border-radius:13px; padding:11px; text-align:center;
+  font-size:15px; font-weight:700;
+  transition:transform .2s var(--ease), filter .2s linear;
+}
+.save-btn.hit{ transform:scale(.95); filter:brightness(.85); }
+
+.toast{
+  position:absolute; bottom:86px; left:50%; transform:translateX(-50%) translateY(14px);
+  background:rgba(44,44,46,.97);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(84,84,88,.65);
+  border-radius:14px; padding:9px 16px;
+  font-size:12.5px; font-weight:600; color:#fff;
+  opacity:0; pointer-events:none; z-index:45;
+  transition:opacity .32s var(--ease), transform .32s var(--ease);
+  white-space:nowrap;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+.replay{
+  background:none; border:1px solid var(--line);
+  color:var(--haze); font-family:var(--body);
+  font-size:13px; font-weight:600;
+  padding:8px 16px; border-radius:10px; cursor:pointer;
+  transition:color .2s linear, border-color .2s linear;
+}
+.replay:hover{ color:var(--chalk); border-color:#3D3D48; }
+.replay:focus-visible{ outline:2px solid var(--signal); outline-offset:3px; }
+
+/* ============ SECTIONS ============ */
+.band{ padding:82px 0; border-top:1px solid var(--line-soft); }
+.band-head{ max-width:46ch; margin-bottom:40px; }
+.band-head h2{ font-size:clamp(27px,3.4vw,38px); margin-top:10px; }
+.band-head p{ color:var(--haze); font-weight:300; font-size:17px; margin:14px 0 0; }
+
+/* the three steps really are a sequence — that's why they're numbered */
+.steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:var(--line-soft); border-radius:18px; overflow:hidden; }
+.step{ background:var(--ink-raised); padding:26px 24px 28px; }
+.step .n{
+  font-family:var(--display); font-size:15px;
+  color:var(--dusk-3); filter:brightness(1.5);
+  display:block; margin-bottom:12px;
+}
+.step h3{ font-size:19px; margin-bottom:7px; }
+.step p{ margin:0; color:var(--haze); font-size:14.5px; font-weight:300; }
+
+.feat{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.f{
+  background:var(--ink-raised);
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:22px 20px 24px;
+  transition:transform .35s var(--ease), border-color .35s var(--ease), background .35s var(--ease);
+}
+.f:hover{ transform:translateY(-4px); border-color:#32323C; background:#17171D; }
+.f h3{ font-size:17.5px; margin-bottom:6px; }
+.f p{ margin:0; color:var(--haze); font-size:14px; font-weight:300; line-height:1.6; }
+.f .tag{
+  display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.1em;
+  color:var(--haze-dim); text-transform:uppercase; margin-bottom:11px;
+}
+
+/* categories strip — the app's real six, in the app's real colors */
+.cats{ display:flex; flex-wrap:wrap; gap:10px; }
+.catpill{
+  display:inline-flex; align-items:center; gap:9px;
+  background:var(--ink-raised); border:1px solid var(--line-soft);
+  border-radius:99px; padding:9px 17px 9px 13px;
+  font-size:14.5px; font-weight:600;
+  transition:transform .3s var(--ease), border-color .3s var(--ease);
+}
+.catpill:hover{ transform:translateY(-3px); border-color:#32323C; }
+.catpill i{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+.catpill em{ font-style:normal; font-size:17px; }
+.catpill .more{ color:var(--haze-dim); font-weight:400; }
+
+/* the automation section: one honest caveat, stated plainly */
+.auto-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:34px; align-items:start; }
+.flow{ display:flex; flex-direction:column; gap:0; }
+.flow-step{
+  display:flex; gap:14px; align-items:flex-start;
+  padding:15px 0;
+}
+.flow-step + .flow-step{ border-top:1px solid var(--line-soft); }
+.flow-step .ic{
+  width:34px; height:34px; flex:0 0 auto;
+  border-radius:10px; display:grid; place-items:center;
+  background:var(--ink-raised); border:1px solid var(--line);
+  font-size:16px;
+}
+.flow-step .fs-t{ font-size:15px; font-weight:700; }
+.flow-step .fs-d{ font-size:13.5px; color:var(--haze); font-weight:300; margin-top:2px; }
+.flow-step code{
+  font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  font-size:12px; background:var(--ink-sunken); border:1px solid var(--line-soft);
+  padding:1.5px 6px; border-radius:5px; color:#C9A6E0;
+  direction:ltr; display:inline-block;
+}
+.note{
+  background:var(--ink-sunken);
+  border:1px solid var(--line-soft);
+  border-right:3px solid var(--warn);
+  border-radius:12px;
+  padding:20px 20px 22px;
+}
+.note .nt{ font-size:14px; font-weight:800; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.note p{ margin:0 0 10px; font-size:14px; color:var(--haze); font-weight:300; line-height:1.65; }
+.note p:last-child{ margin-bottom:0; }
+.note b{ color:var(--chalk); font-weight:600; }
+
+/* privacy strip */
+.priv{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--line-soft); border-radius:16px; overflow:hidden; }
+.priv > div{ padding:22px 20px; }
+.priv > div + div{ border-right:1px solid var(--line-soft); }
+.priv .pv{ font-family:var(--display); font-size:25px; color:var(--chalk); }
+.priv .pl{ font-size:13px; color:var(--haze); font-weight:300; margin-top:4px; }
+
+/* closing CTA */
+.close-band{
+  position:relative; isolation:isolate;
+  border-top:1px solid var(--line-soft);
+  padding:88px 0 96px;
+  text-align:center;
+  overflow:hidden;
+}
+.close-band::before{
+  content:''; position:absolute; inset:0; z-index:-1;
+  background:radial-gradient(52% 100% at 50% 108%, rgba(122,63,82,.34), transparent 70%),
+             radial-gradient(40% 80% at 50% 112%, rgba(58,63,107,.34), transparent 72%);
+}
+.close-band h2{ font-size:clamp(30px,4vw,44px); }
+.close-band p{ color:var(--haze); font-size:17px; font-weight:300; max-width:42ch; margin:16px auto 0; }
+.close-band .cta-row{ justify-content:center; }
+.install{
+  margin:34px auto 0; max-width:520px;
+  background:rgba(20,20,25,.72);
+  border:1px solid var(--line-soft);
+  border-radius:16px; padding:20px 22px;
+  text-align:right;
+}
+.install .it{ font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--haze-dim); margin-bottom:12px; }
+.install ol{ margin:0; padding:0 18px 0 0; display:flex; flex-direction:column; gap:7px; }
+.install li{ font-size:14.5px; color:var(--haze); font-weight:300; }
+.install li b{ color:var(--chalk); font-weight:600; }
+
+/* share block — the one bright object on the whole page, deliberately last:
+   a QR needs a light ground to scan reliably anyway, so the constraint and the
+   composition agree. */
+.share{
+  margin:18px auto 0; max-width:520px;
+  background:rgba(20,20,25,.72);
+  border:1px solid var(--line-soft);
+  border-radius:16px; padding:20px 22px;
+  text-align:right;
+  display:flex; gap:20px; align-items:center;
+}
+.qr-tile{
+  flex:0 0 auto;
+  background:var(--chalk);
+  border-radius:13px;
+  padding:11px;
+  line-height:0;
+  box-shadow:0 8px 26px rgba(0,0,0,.5);
+}
+.qr-tile canvas{ display:block; width:132px; height:132px; border-radius:3px; }
+.share-txt{ flex:1; min-width:0; }
+.share-txt p{ margin:0 0 12px; font-size:13.5px; color:var(--haze); font-weight:300; line-height:1.6; }
+.linkrow{ display:flex; gap:8px; align-items:stretch; }
+.linkrow code{
+  flex:1; min-width:0;
+  font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  font-size:11.5px; color:#C9A6E0;
+  background:var(--ink-sunken); border:1px solid var(--line-soft);
+  border-radius:9px; padding:8px 10px;
+  direction:ltr; text-align:left;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  display:flex; align-items:center;
+}
+.copy-btn{
+  flex:0 0 auto;
+  font-family:var(--body); font-size:13px; font-weight:800;
+  color:var(--chalk); background:transparent;
+  border:1px solid var(--line); border-radius:9px;
+  padding:0 14px; cursor:pointer;
+  transition:border-color .2s linear, color .2s linear, background .2s linear;
+}
+.copy-btn:hover{ border-color:#3D3D48; background:rgba(255,255,255,.035); }
+.copy-btn.done{ color:var(--good); border-color:rgba(48,209,88,.45); }
+.copy-btn:focus-visible{ outline:2px solid var(--signal); outline-offset:3px; }
+@media (max-width:520px){
+  .share{ flex-direction:column; align-items:stretch; text-align:center; }
+  .qr-tile{ align-self:center; }
+  .share-txt .it{ text-align:center; }
+}
+
+footer{
+  border-top:1px solid var(--line-soft);
+  padding:26px 0 40px;
+  font-size:13px; color:var(--haze-dim);
+  display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+}
+footer a{ color:var(--haze); text-decoration:none; border-bottom:1px solid var(--line); }
+footer a:hover{ color:var(--chalk); }
+
+@media (max-width:900px){
+  .hero-grid{ grid-template-columns:1fr; gap:44px; justify-items:center; text-align:center; }
+  .hero-copy{ max-width:36ch; }
+  .hero .lede{ margin-inline:auto; }
+  .cta-row, .hero-meta{ justify-content:center; }
+  .steps, .feat{ grid-template-columns:1fr; }
+  .auto-grid{ grid-template-columns:1fr; }
+  .priv{ grid-template-columns:repeat(2,1fr); }
+  .priv > div:nth-child(3){ border-right:none; }
+  .priv > div:nth-child(n+3){ border-top:1px solid var(--line-soft); }
+}
+@media (max-width:420px){
+  .priv{ grid-template-columns:1fr; }
+  .priv > div + div{ border-right:none; border-top:1px solid var(--line-soft); }
+  .phone{ width:290px; height:638px; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+</style>
+
+</head>
+<body>
+<div class="page" dir="rtl" lang="he">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="bloom"></div>
+    <div class="wrap hero-grid">
+
+      <div class="hero-copy">
+        <p class="eyebrow rise d1">PWA · iPhone · עברית</p>
+        <h1 class="rise d2">כמה <span class="lit">באמת</span> יצא לי החודש</h1>
+        <p class="lede rise d3">
+          אפליקציה אישית לרישום הוצאות ב־<b>שתי נגיעות</b>.
+          הכל נשמר בטלפון שלך, עובדת גם בלי אינטרנט,
+          ויושבת על מסך הבית כמו אפליקציה רגילה.
+        </p>
+
+        <div class="cta-row rise d4">
+          <a class="btn btn-primary" href="https://adirossss.github.io/-/" target="_blank" rel="noopener">
+            פתח את האפליקציה ←
+          </a>
+          <a class="btn btn-ghost" href="#install">איך מתקינים</a>
+        </div>
+
+        <div class="hero-meta rise d5">
+          <span><b>0 ₪</b> · בלי מנוי</span>
+          <span><b>0</b> חשבונות לפתוח</span>
+          <span><b>81KB</b> · קובץ אחד</span>
+        </div>
+      </div>
+
+      <div class="phone-col">
+        <div class="phone">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="statusbar">
+              <span>9:41</span>
+              <span style="display:flex;align-items:center;gap:5px;">
+                <span style="font-size:9px;letter-spacing:-1px;">▂▄▆</span>
+                <span class="batt"></span>
+              </span>
+            </div>
+
+            <div class="app-scroll">
+              <div class="app-hero">
+                <div class="ah-label">סה"כ הוצאות · ספטמבר</div>
+                <div class="ah-total"><span class="cur">₪</span><span id="total">1,240.00</span></div>
+                <div class="bud-bar"><i id="budfill"></i></div>
+                <div class="bud-meta">
+                  <span>תקציב חודשי ₪3,000</span>
+                  <span id="budleft">נשאר ₪1,760</span>
+                </div>
+              </div>
+
+              <div class="sec-title">התפלגות לפי קטגוריה</div>
+              <div class="dist">
+                <div class="dist-row"><span class="nm">אוכל</span><span class="track"><i id="d1" style="width:52%;background:#3987e5"></i></span><span class="vl">₪645</span></div>
+                <div class="dist-row"><span class="nm">תחבורה</span><span class="track"><i style="width:26%;background:#c98500"></i></span><span class="vl">₪322</span></div>
+                <div class="dist-row"><span class="nm">בילויים</span><span class="track"><i style="width:15%;background:#d55181"></i></span><span class="vl">₪188</span></div>
+              </div>
+
+              <div class="sec-title">הוצאות אחרונות</div>
+              <div class="list" id="list">
+                <div class="row">
+                  <span class="chip" style="background:rgba(201,133,0,.2)">🚌</span>
+                  <span class="txt"><span class="t1">תחבורה</span><span class="t2">רב־קו · אתמול</span></span>
+                  <span class="amt">₪16.50</span>
+                </div>
+                <div class="row">
+                  <span class="chip" style="background:rgba(213,81,129,.2)">🎬</span>
+                  <span class="txt"><span class="t1">בילויים</span><span class="t2">סרט · שבת</span></span>
+                  <span class="amt">₪54.00</span>
+                </div>
+                <div class="row">
+                  <span class="chip" style="background:rgba(57,135,229,.2)">🍔</span>
+                  <span class="txt"><span class="t1">אוכל</span><span class="t2">סופר · שישי</span></span>
+                  <span class="amt">₪213.70</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="fab" id="fab">+</div>
+
+            <div class="sheet" id="sheet">
+              <div class="grab"></div>
+              <h4>בחר/י קטגוריה</h4>
+              <div class="catgrid">
+                <div class="cat" id="cat-food"><em>🍔</em>אוכל</div>
+                <div class="cat"><em>👕</em>בגדים</div>
+                <div class="cat"><em>💇</em>תספורת</div>
+                <div class="cat"><em>🚌</em>תחבורה</div>
+                <div class="cat"><em>🎬</em>בילויים</div>
+                <div class="cat"><em>🧾</em>אחר</div>
+              </div>
+              <div class="amt-display"><span class="cur">₪</span><span id="amt">0</span></div>
+              <div class="keypad">
+                <div class="key" data-k="1">1</div><div class="key" data-k="2">2</div><div class="key" data-k="3">3</div>
+                <div class="key" data-k="4">4</div><div class="key" data-k="5">5</div><div class="key" data-k="6">6</div>
+                <div class="key" data-k="7">7</div><div class="key" data-k="8">8</div><div class="key" data-k="9">9</div>
+                <div class="key" data-k=".">.</div><div class="key" data-k="0">0</div><div class="key" data-k="x">⌫</div>
+              </div>
+              <div class="save-btn" id="savebtn">שמור</div>
+            </div>
+
+            <div class="toast" id="toast">נשמר בהצלחה ✓</div>
+          </div>
+        </div>
+        <button class="replay" id="replay" type="button">▸ הפעל את ההדגמה שוב</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ THE SEQUENCE ============ -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <p class="eyebrow">מנגיעה בכרטיס ועד לרישום</p>
+        <h2>שלושה שלבים, ואף אחד מהם לא "אחר כך אזכור"</h2>
+        <p>הרגע שאחרי התשלום הוא הרגע היחיד שבו באמת זוכרים כמה יצא. האפליקציה בנויה סביבו.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="n">שלב 01</span>
+          <h3>משלמים כרגיל</h3>
+          <p>Apple Pay, מזומן, העברה — לא משנה. האפליקציה לא נוגעת בכסף שלך ולא מתחברת לבנק.</p>
+        </div>
+        <div class="step">
+          <span class="n">שלב 02</span>
+          <h3>האפליקציה נפתחת לבד</h3>
+          <p>אוטומציה של Shortcuts מזהה תשלום בארנק ופותחת את מסך הרישום — בלי שתצטרך לחפש כלום.</p>
+        </div>
+        <div class="step">
+          <span class="n">שלב 03</span>
+          <h3>קטגוריה, סכום, שמור</h3>
+          <p>שתי נגיעות והסכום בפנים. תיאור קצר זה רשות, לא חובה — ובגלל זה זה באמת נעשה.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <p class="eyebrow">מה יש בפנים</p>
+        <h2>כל מה שצריך כדי לדעת איפה עומדים</h2>
+      </div>
+      <div class="feat">
+        <div class="f">
+          <span class="tag">תקציב</span>
+          <h3>תקציב חודשי וגם לפי קטגוריה</h3>
+          <p>מגדירים כמה הקצבת לעצמך, ורואים כמה נשאר. הפס משנה צבע כשמתקרבים לגבול ומאדים כשעוברים אותו.</p>
+        </div>
+        <div class="f">
+          <span class="tag">היסטוריה</span>
+          <h3>סינון לפי היום, השבוע, החודש</h3>
+          <p>או טווח תאריכים מותאם. חיפוש חופשי בתיאורים, ועריכה או מחיקה של כל רישום בלחיצה.</p>
+        </div>
+        <div class="f">
+          <span class="tag">תרשים</span>
+          <h3>התפלגות לפי קטגוריה</h3>
+          <p>גרף שמראה לאן הכסף באמת הולך, עם השוואה לחודש הקודם — כמה עלית או ירדת באחוזים.</p>
+        </div>
+        <div class="f">
+          <span class="tag">אוטומציה</span>
+          <h3>הוצאות קבועות</h3>
+          <p>מנוי, חדר כושר, ביטוח. קובעים תאריך בחודש וההוצאה נכנסת מעצמה — בלי להזין אותה שוב ושוב.</p>
+        </div>
+        <div class="f">
+          <span class="tag">קיצור דרך</span>
+          <h3>חזרה על ההוצאה האחרונה</h3>
+          <p>אותו קפה כל בוקר? צ'יפ אחד בראש המסך מכניס את הרישום האחרון שוב בנגיעה אחת.</p>
+        </div>
+        <div class="f">
+          <span class="tag">התאמה</span>
+          <h3>קטגוריות משלך</h3>
+          <p>שש קטגוריות מובנות, ואפשר להוסיף כמה שרוצים — שם, אימוג'י וצבע משלך לכל אחת.</p>
+        </div>
+        <div class="f">
+          <span class="tag">ייצוא</span>
+          <h3>CSV ו־PDF</h3>
+          <p>כל ההיסטוריה לקובץ שנפתח באקסל או ב־Numbers, או דוח מודפס לפי הסינון הנוכחי.</p>
+        </div>
+        <div class="f">
+          <span class="tag">גיבוי</span>
+          <h3>סנכרון לגיליון Google</h3>
+          <p>רשות לגמרי. מחברים כתובת Apps Script וכל רישום נשלח גם לגיליון שלך, במקביל לשמירה המקומית.</p>
+        </div>
+        <div class="f">
+          <span class="tag">תזכורת</span>
+          <h3>נודניק יומי</h3>
+          <p>לא רשמת שום הוצאה היום? בפתיחה הבאה של האפליקציה תקבל תזכורת עדינה. בלי שרת, בלי הרשאות.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CATEGORIES ============ -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <p class="eyebrow">ברירת המחדל</p>
+        <h2>שש קטגוריות שמכסות כמעט הכל</h2>
+        <p>הצבעים לא אקראיים — כל קטגוריה מקבלת גוון קבוע משלה, כך שהתרשים נקרא אותו דבר בכל חודש.</p>
+      </div>
+      <div class="cats">
+        <span class="catpill"><i style="background:#3987e5"></i><em>🍔</em>אוכל</span>
+        <span class="catpill"><i style="background:#d95926"></i><em>👕</em>בגדים</span>
+        <span class="catpill"><i style="background:#199e70"></i><em>💇</em>תספורת</span>
+        <span class="catpill"><i style="background:#c98500"></i><em>🚌</em>תחבורה</span>
+        <span class="catpill"><i style="background:#d55181"></i><em>🎬</em>בילויים</span>
+        <span class="catpill"><i style="background:#008300"></i><em>🧾</em>אחר</span>
+        <span class="catpill"><span class="more">+ כמה שתרצה, משלך</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ APPLE PAY AUTOMATION ============ -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <p class="eyebrow">Shortcuts × Wallet</p>
+        <h2>שהטלפון יזכיר לך, לא אתה</h2>
+        <p>אוטומציה קצרה ב־Shortcuts שמזהה תשלום אמיתי בארנק ופותחת את מסך הרישום מיד אחריו.</p>
+      </div>
+
+      <div class="auto-grid">
+        <div class="flow">
+          <div class="flow-step">
+            <span class="ic">⚡</span>
+            <span>
+              <span class="fs-t">Shortcuts → Automation → Wallet</span>
+              <span class="fs-d">בוחרים את הכרטיס שממנו משלמים ביום־יום.</span>
+            </span>
+          </div>
+          <div class="flow-step">
+            <span class="ic">🔗</span>
+            <span>
+              <span class="fs-t">הפעולה: Open URL</span>
+              <span class="fs-d">מדביקים את הכתובת <code>https://adirossss.github.io/-/?add=1</code></span>
+            </span>
+          </div>
+          <div class="flow-step">
+            <span class="ic">🔕</span>
+            <span>
+              <span class="fs-t">מכבים "Ask Before Running"</span>
+              <span class="fs-d">כדי שזה יקרה מעצמו, בלי אישור בכל תשלום.</span>
+            </span>
+          </div>
+          <div class="flow-step">
+            <span class="ic">💳</span>
+            <span>
+              <span class="fs-t">זהו — נוגעים בכרטיס</span>
+              <span class="fs-d">מסך בחירת הקטגוריה נפתח לבד, עם המקלדת מוכנה.</span>
+            </span>
+          </div>
+        </div>
+
+        <aside class="note">
+          <div class="nt">⚠️ מגבלה אמיתית של iOS, בלי לייפות</div>
+          <p>
+            הפעולה <b>Open URL</b> של Shortcuts תמיד פותחת קישור ב־<b>Safari</b>, לעולם לא באפליקציה
+            המותקנת ממסך הבית. אין ל־iOS שום דרך לפתוח אפליקציית Web App מתוך אוטומציה.
+          </p>
+          <p>
+            מבחינת הנתונים זה לא משנה כלום: Safari והאפליקציה המותקנת חולקות את אותו מקור ואת אותו
+            אחסון, אז הרישום נכנס בדיוק לאותו מקום. <b>ההבדל הוא ויזואלי בלבד</b> — נפתח עם סרגל
+            Safari במקום במסך מלא.
+          </p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVACY / TECH ============ -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <p class="eyebrow">מתחת למכסה המנוע</p>
+        <h2>הנתונים שלך לא הולכים לשום מקום</h2>
+        <p>אין שרת, אין חשבון, אין אנליטיקס. האפליקציה היא קובץ סטטי אחד שרץ כולו בדפדפן שלך.</p>
+      </div>
+      <div class="priv">
+        <div>
+          <div class="pv">מקומי</div>
+          <div class="pl">הכל נשמר ב־localStorage של הטלפון, לא בענן</div>
+        </div>
+        <div>
+          <div class="pv">גיבוי כפול</div>
+          <div class="pl">עותק מקביל ב־IndexedDB, למקרה ש־iOS מנקה אחסון</div>
+        </div>
+        <div>
+          <div class="pv">אופליין</div>
+          <div class="pl">Service Worker — נפתחת ועובדת גם בלי רשת</div>
+        </div>
+        <div>
+          <div class="pv">מתעדכן לבד</div>
+          <div class="pl">גרסה חדשה נכנסת בפתיחה הבאה, בלי להתקין מחדש</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLOSE ============ -->
+  <section class="close-band" id="install">
+    <div class="wrap">
+      <p class="eyebrow">מוכן לשימוש</p>
+      <h2>תוסיף אותה למסך הבית ותתחיל</h2>
+      <p>בלי הורדה מהחנות, בלי הרשמה. הקישור הוא האפליקציה.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://adirossss.github.io/-/" target="_blank" rel="noopener">
+          פתח את האפליקציה ←
+        </a>
+      </div>
+
+      <div class="install">
+        <div class="it">התקנה באייפון · 4 שלבים</div>
+        <ol>
+          <li>פתח את הקישור ב־<b>Safari</b> (חשוב — לא ב־Chrome)</li>
+          <li>לחץ על כפתור <b>השיתוף</b> בתחתית המסך</li>
+          <li>גלול ובחר <b>הוסף למסך הבית</b></li>
+          <li>לחץ <b>הוסף</b> — והאייקון יופיע כמו כל אפליקציה אחרת</li>
+        </ol>
+      </div>
+
+      <div class="share" id="share">
+        <div class="qr-tile" id="qrtile"><canvas id="qr"></canvas></div>
+        <div class="share-txt">
+          <div class="it">שולח לחבר?</div>
+          <p>שיסרוק את הקוד במצלמת האייפון — הקישור נפתח ישר ב־Safari, מוכן להוספה למסך הבית. או פשוט תשלח לו את הכתובת:</p>
+          <div class="linkrow">
+            <code id="applink">https://adirossss.github.io/-/</code>
+            <button class="copy-btn" id="copybtn" type="button">העתק</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;width:100%;">
+      <span>רישום הוצאות Apple Pay · פרויקט אישי</span>
+      <span><a href="https://adirossss.github.io/-/" target="_blank" rel="noopener">adirossss.github.io</a></span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var fab = $('fab'), sheet = $('sheet'), toast = $('toast'),
+      amt = $('amt'), total = $('total'), budfill = $('budfill'),
+      budleft = $('budleft'), list = $('list'), catFood = $('cat-food'),
+      saveBtn = $('savebtn'), d1 = $('d1'), replay = $('replay');
+
+  var timers = [];
+  function at(ms, fn){ timers.push(setTimeout(fn, ms)); }
+  function clearAll(){ timers.forEach(clearTimeout); timers = []; }
+
+  var fmt = function(n){
+    return n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  };
+
+  function countTo(from, to, ms){
+    var t0 = null;
+    function step(ts){
+      if(t0 === null) t0 = ts;
+      var p = Math.min((ts - t0) / ms, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      total.textContent = fmt(from + (to - from) * eased);
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function newRow(){
+    var el = document.createElement('div');
+    el.className = 'row fresh';
+    el.innerHTML =
+      '<span class="chip" style="background:rgba(57,135,229,.2)">🍔</span>' +
+      '<span class="txt"><span class="t1">אוכל</span>' +
+      '<span class="t2">עכשיו</span></span>' +
+      '<span class="amt">₪42.90</span>';
+    return el;
+  }
+
+  function reset(){
+    clearAll();
+    sheet.classList.remove('open');
+    toast.classList.remove('show');
+    catFood.classList.remove('on');
+    fab.classList.remove('tapped');
+    saveBtn.classList.remove('hit');
+    amt.textContent = '0';
+    total.textContent = '1,240.00';
+    budfill.style.width = '41.3%';
+    budleft.textContent = 'נשאר ₪1,760';
+    d1.style.width = '52%';
+    var fresh = list.querySelector('.fresh');
+    if(fresh) fresh.remove();
+    [].forEach.call(document.querySelectorAll('.key.hit'), function(k){ k.classList.remove('hit'); });
+  }
+
+  function finalState(){
+    reset();
+    catFood.classList.add('on');
+    amt.textContent = '42.90';
+    total.textContent = '1,282.90';
+    budfill.style.width = '42.8%';
+    budleft.textContent = 'נשאר ₪1,717';
+    d1.style.width = '56%';
+    var row = newRow();
+    row.classList.remove('fresh');
+    list.insertBefore(row, list.firstChild);
+  }
+
+  function tapKey(sel, ms){
+    at(ms, function(){
+      var k = document.querySelector('.key[data-k="' + sel + '"]');
+      if(!k) return;
+      k.classList.add('hit');
+      setTimeout(function(){ k.classList.remove('hit'); }, 150);
+    });
+  }
+
+  function play(){
+    reset();
+
+    // 1 — the FAB is tapped, the sheet comes up on the real iOS drawer curve
+    at(900,  function(){ fab.classList.add('tapped'); });
+    at(1120, function(){ fab.classList.remove('tapped'); sheet.classList.add('open'); });
+
+    // 2 — a category is picked
+    at(2000, function(){ catFood.classList.add('on'); });
+
+    // 3 — the amount is typed: 4, 2, ., 9, 0
+    var seq = [['4',2500,'4'], ['2',2760,'42'], ['.',3020,'42.'], ['9',3280,'42.9'], ['0',3540,'42.90']];
+    seq.forEach(function(s){
+      tapKey(s[0], s[1]);
+      at(s[1] + 40, function(){ amt.textContent = s[2]; });
+    });
+
+    // 4 — save, sheet down
+    at(4300, function(){ saveBtn.classList.add('hit'); });
+    at(4480, function(){ saveBtn.classList.remove('hit'); sheet.classList.remove('open'); });
+
+    // 5 — the row lands, the totals move, the toast confirms
+    at(4850, function(){
+      list.insertBefore(newRow(), list.firstChild);
+      countTo(1240, 1282.90, 800);
+      budfill.style.width = '42.8%';
+      d1.style.width = '56%';
+      budleft.textContent = 'נשאר ₪1,717';
+      toast.classList.add('show');
+    });
+    at(6600, function(){ toast.classList.remove('show'); });
+  }
+
+  if(reduced){
+    finalState();
+    replay.hidden = true;
+  } else {
+    at(600, play);
+    replay.addEventListener('click', function(){ clearAll(); play(); });
+  }
+
+  // ---------- share block ----------
+  var APP_URL = 'https://adirossss.github.io/-/';
+
+  // drawn locally; if the CDN script didn't load, drop the tile rather than
+  // leave an empty white square where a scannable code should be
+  if(typeof QRious === 'function'){
+    new QRious({
+      element: $('qr'),
+      value: APP_URL,
+      size: 264,          // 2× the 132px CSS box, so it stays sharp on retina
+      level: 'M',
+      padding: 0,
+      background: '#F2F0F4',
+      foreground: '#08080A'
+    });
+  } else {
+    $('qrtile').remove();
+  }
+
+  var copyBtn = $('copybtn');
+  copyBtn.addEventListener('click', function(){
+    function done(){
+      copyBtn.textContent = 'הועתק ✓';
+      copyBtn.classList.add('done');
+      setTimeout(function(){
+        copyBtn.textContent = 'העתק';
+        copyBtn.classList.remove('done');
+      }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(APP_URL).then(done, select);
+    } else {
+      select();
+    }
+    // clipboard API is blocked in some embedded contexts — fall back to
+    // selecting the text so the link can still be copied by hand
+    function select(){
+      var r = document.createRange();
+      r.selectNodeContents($('applink'));
+      var s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

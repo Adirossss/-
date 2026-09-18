@@ -59,8 +59,45 @@
        (Ionic) for the bottom sheet specifically */
     --ease:cubic-bezier(.23,1,.32,1);
     --ease-drawer:cubic-bezier(.32,.72,0,1);
+
+    /* ---- design system ----------------------------------------------
+       Three things were making this read as "a web page with rounded
+       divs" rather than an app: every surface was the same grey at the
+       same radius with the same 1px border, every gap was the same size,
+       and text had no scale. These tokens fix all three at the source. */
+
+    /* one elevation ladder — surfaces differ by fill, never by border */
+    --sur-1:#121214;   /* page ground, just off pure black            */
+    --sur-2:#1b1b1e;   /* grouped card                                */
+    --sur-3:#262629;   /* control inside a card (input, chip, thumb)   */
+    --sur-hi:#3a3a3e;  /* pressed / selected                          */
+
+    /* text ramp: primary → secondary → tertiary, real contrast steps */
+    --text-2:#a2a2a8;
+    --text-3:#6d6d73;
+
+    /* hairline that reads as a separator, not an outline */
+    --hair:rgba(255,255,255,.08);
+
+    /* radius ladder — nested corners must shrink inward, not repeat */
+    --r-xs:8px; --r-sm:11px; --r-md:14px; --r-lg:18px; --r-xl:24px;
+
+    /* one horizontal gutter for the whole app; nothing sets its own */
+    --gut:18px;
+
+    --shadow-card:0 1px 2px rgba(0,0,0,.4);
+    --shadow-pop:0 8px 24px rgba(0,0,0,.5);
   }
+  /* money must line up in a column — proportional digits are the single
+     most common tell that a finance UI wasn't designed by anyone */
+  .hero-num, .amt, .legend-amt, .legend-pct, .hero-budget-nums,
+  .amount-display, .hero-budget-left{ font-variant-numeric:tabular-nums; }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;}
+  /* Every <svg> here is decoration inside a control that handles its own
+     taps — none is a target in its own right. Without this, a tap on an
+     icon reports the <path> as event.target, and an SVG element has no
+     .click() method at all, which broke the double-tap guard below. */
+  svg{ pointer-events:none; }
   input, textarea{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
   html,body{
     margin:0; min-height:100%;
@@ -91,13 +128,12 @@
   }
   .screen{
     width:100%; height:100%;
-    /* a quiet echo of the hero card's palette, fading to flat black by the
-       time content reaches the list — keeps the boldness in one place (the
-       hero card) while the page around it doesn't feel like a flat void */
+    /* ONE light source, not two. Two overlapping blooms in different hues
+       read as decoration; a single soft wash behind the hero card reads as
+       depth. It also stops competing with the card's own gradient. */
     background:
-      radial-gradient(120% 38% at 50% 0%, rgba(58,63,107,.35), transparent 60%),
-      radial-gradient(100% 32% at 88% 6%, rgba(122,63,82,.22), transparent 55%),
-      var(--screen-bg);
+      radial-gradient(130% 30% at 50% -4%, rgba(80,72,130,.22), transparent 70%),
+      var(--sur-1);
     border-radius:42px;
     overflow:hidden;
     position:relative;
@@ -136,11 +172,14 @@
   /* ---------- Bottom sheet ---------- */
   .sheet{
     position:absolute; left:0; right:0; bottom:0;
-    background:rgba(28,28,30,.92);
-    backdrop-filter:blur(28px) saturate(180%);
-    -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border-radius:20px 20px 0 0;
-    padding:18px 18px 28px;
+    background:rgba(30,30,33,.93);
+    backdrop-filter:blur(30px) saturate(180%);
+    -webkit-backdrop-filter:blur(30px) saturate(180%);
+    /* a sheet's corners should be noticeably rounder than the cards behind
+       it — that size difference is most of what sells it as a layer on top */
+    border-radius:26px 26px 0 0;
+    box-shadow:0 -1px 0 rgba(255,255,255,.09), 0 -20px 50px rgba(0,0,0,.6);
+    padding:14px 18px 28px;
     transform:translateY(100%);
     transition:transform .38s var(--ease-drawer);
     z-index:60;
@@ -154,46 +193,57 @@
   }
   .sheet-close{
     position:absolute; top:14px; left:16px;
-    width:28px; height:28px; border-radius:50%;
-    background:var(--glass-bg-strong); border:1px solid var(--glass-border); color:var(--text-dim);
+    width:30px; height:30px; border-radius:50%;
+    background:var(--sur-hi); border:0; color:var(--text-2);
     display:flex; align-items:center; justify-content:center;
-    font-size:14px; cursor:pointer; z-index:5;
+    font-size:13px; cursor:pointer; z-index:5;
     transition:transform .15s var(--ease);
   }
   .sheet-close:active{ transform:scale(.9); }
-  .sheet h2{ margin:0 0 4px; font-size:19px;}
-  .sheet .sub{ color:var(--text-dim); font-size:13px; margin-bottom:16px;}
+  .sheet h2{ margin:0 0 3px; font-size:21px; font-weight:700; letter-spacing:-.3px; }
+  .sheet .sub{ color:var(--text-3); font-size:13px; margin-bottom:18px; }
 
   .cat-grid{
     display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;
   }
   .cat-btn{
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    border-radius:16px;
+    background:var(--sur-3);
+    border:0; border-radius:16px;
     padding:14px 6px;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
+    display:flex; flex-direction:column; align-items:center; gap:7px;
     color:var(--text);
-    font-size:12px;
-    cursor:pointer;
-    transition:border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease);
+    font-size:12.5px; font-weight:500;
+    cursor:pointer; position:relative;
+    transition:background .15s var(--ease), transform .15s var(--ease);
   }
-  .cat-btn:active{ background:var(--glass-bg-strong); border-color:var(--accent); transform:scale(.96); }
+  .cat-btn:active{ background:var(--sur-hi); transform:scale(.95); }
+  /* same rounded-square chip as the history rows, so a category looks like
+     the same object in both places */
   .cat-btn .emoji{
-    font-size:19px; width:40px; height:40px; border-radius:50%;
+    font-size:20px; width:42px; height:42px; border-radius:13px;
     display:flex; align-items:center; justify-content:center;
-    background:color-mix(in srgb, var(--cat-color, var(--text-dim)) 24%, var(--card2));
+    background:color-mix(in srgb, var(--cat-color, var(--text-3)) 28%, var(--sur-hi));
   }
-  .cat-btn.recent{ border-color:var(--accent); }
+  /* "most recent" is a hint, not a selection — a ring around the whole tile
+     competed with the real selected state, so it's a small dot instead */
+  .cat-btn.recent::after{
+    content:''; position:absolute; top:9px; inset-inline-end:9px;
+    width:6px; height:6px; border-radius:50%; background:var(--accent);
+  }
 
+  /* an underlined grey string is a hyperlink, which is the wrong signal on
+     a touch control — this is a tappable chip instead */
   .add-note-toggle{
-    text-align:center; color:var(--text-dim); font-size:12.5px; text-decoration:underline;
-    cursor:pointer; margin-bottom:8px;
+    display:block; width:fit-content; margin:0 auto 8px;
+    padding:5px 12px; border-radius:99px;
+    background:var(--sur-3); color:var(--text-2); font-size:12.5px; font-weight:500;
+    cursor:pointer; transition:background .15s var(--ease), transform .15s var(--ease);
   }
+  .add-note-toggle:active{ background:var(--sur-hi); transform:scale(.95); }
   .amount-note-field{ display:none; margin-bottom:10px; }
   .amount-note-field.show{ display:block; }
   .amount-note-field input{
-    width:100%; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:14px;
+    width:100%; background:var(--sur-3); border:0; border-radius:14px;
     padding:10px 14px; color:var(--text); font-size:13px; text-align:right;
   }
   .amount-note-field input::placeholder{ color:var(--text-dim); }
@@ -201,30 +251,39 @@
 
   .amount-step{ display:none; flex-direction:column; }
   .amount-step.show{ display:flex; }
+  /* the amount is the whole point of this screen, so it gets the display
+     size and everything else steps back a weight */
   .amount-display{
-    text-align:center; font-size:44px; font-weight:700;
-    margin:18px 0 6px; direction:ltr; letter-spacing:-0.02em;
+    text-align:center; font-size:56px; font-weight:700;
+    margin:20px 0 10px; direction:ltr; letter-spacing:-0.04em; line-height:1;
   }
-  .amount-display .cur{ font-size:22px; color:var(--text-dim); margin-right:4px;}
+  .amount-display .cur{
+    font-size:26px; font-weight:500; color:var(--text-3);
+    margin-right:5px; vertical-align:middle;
+  }
   .amount-display.invalid{ color:var(--red); animation:shake .4s; }
   @keyframes shake{
     0%,100%{ transform:translateX(0); }
     25%{ transform:translateX(-8px); }
     75%{ transform:translateX(8px); }
   }
-  .selected-cat{ text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:6px;}
+  .selected-cat{ text-align:center; color:var(--text-2); font-size:14.5px; font-weight:500; margin-bottom:10px; }
   .keypad{
     display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
     margin-top:10px;
     direction:ltr; /* numeric keypad always reads 1-2-3 / 4-5-6 / 7-8-9, like any calculator, regardless of page direction */
   }
+  /* filled keys, no outlines — an outlined grid reads as a web form, a
+     filled one reads as a keypad. Digits get the numeric face so 1 and 7
+     don't jump around between presses. */
   .key{
-    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px;
-    padding:16px 0; font-size:22px; color:var(--text); cursor:pointer;
-    transition:transform .15s var(--ease), background .15s var(--ease);
+    background:var(--sur-3); border:0; border-radius:14px;
+    padding:15px 0; font-size:23px; font-weight:500; color:var(--text); cursor:pointer;
+    font-variant-numeric:tabular-nums; font-family:inherit;
+    transition:transform .12s var(--ease), background .12s var(--ease);
   }
-  .key:active{ background:var(--glass-bg-strong); border-color:var(--accent); transform:scale(.96); }
-  .key.wide{ font-size:16px; }
+  .key:active{ background:var(--sur-hi); transform:scale(.94); }
+  .key.wide{ font-size:16px; color:var(--text-2); }
   .actions{ display:flex; gap:10px; margin-top:16px; }
   .btn{
     flex:1; padding:14px; border-radius:14px; border:none;
@@ -235,7 +294,7 @@
     background:var(--accent); color:#fff;
   }
   .btn.primary:active{ opacity:.7; transform:scale(.98); }
-  .btn.ghost{ background:var(--glass-bg-strong); border:1px solid var(--glass-border); color:var(--text); }
+  .btn.ghost{ background:var(--sur-3); border:0; color:var(--text); }
   .btn.ghost:active{ opacity:.6; }
   .btn.danger{
     width:100%; margin-top:10px; flex:none;
@@ -258,64 +317,95 @@
   .toast-action{ text-decoration:underline; font-weight:800; margin-inline-start:10px; cursor:pointer; pointer-events:auto; }
 
   /* ---------- Main view ---------- */
+  /* iOS large-title nav bar: a compact row of bare icon buttons, then the
+     title on its own line at the leading edge. The old version centred a
+     900-weight title between two outlined circles — the circles read as
+     web buttons, and a centred heavy title with no nav context reads as a
+     banner. Neither is what an app looks like. */
   .history-header{
-    padding:16px 18px 10px; display:flex; justify-content:space-between; align-items:center;
+    padding:6px var(--gut) 12px; display:flex; flex-direction:column; gap:2px;
   }
+  .header-actions{ display:flex; justify-content:flex-end; align-items:center; gap:2px; margin-inline-start:-10px; }
   .history-header h1{
-    flex:1; text-align:center;
-    font-size:28px; margin:0; font-weight:900; letter-spacing:-.4px;
-    color:var(--text);
+    text-align:start;
+    font-size:32px; margin:0; font-weight:800; letter-spacing:-.6px;
+    line-height:1.15; color:var(--text);
   }
-  /* both side buttons share the same fixed width so the title between
-     them lands in the true visual center, not just the flex midpoint */
+  /* no chrome — the glyph IS the button. 44px stays for the tap target. */
   .header-btn{
-    font-size:16px; cursor:pointer; color:var(--text-dim);
+    cursor:pointer; color:var(--accent);
     width:44px; height:44px; border-radius:50%; flex-shrink:0;
-    background:var(--glass-bg); border:1px solid var(--glass-border);
     display:flex; align-items:center; justify-content:center;
-    transition:transform .15s var(--ease), background .15s var(--ease);
+    transition:transform .15s var(--ease), opacity .15s var(--ease);
   }
-  .header-btn:active{ background:var(--glass-bg-strong); transform:scale(.92); }
+  .header-btn:active{ opacity:.45; transform:scale(.88); }
 
+  /* a suggested action, so it gets the accent tint rather than looking like
+     another inert grey card in the stack */
   .repeat-chip{
-    display:none; align-items:center; justify-content:center; gap:6px;
-    margin:0 18px 12px; padding:9px 14px; border-radius:12px;
-    background:var(--card); border:1px solid var(--sep);
-    color:var(--text-dim); font-size:12px; font-weight:600; cursor:pointer;
+    display:none; align-items:center; justify-content:center; gap:7px;
+    margin:0 var(--gut) 14px; padding:10px 14px; border-radius:var(--r-sm);
+    background:color-mix(in srgb, var(--accent) 14%, transparent);
+    border:0; color:var(--accent); font-size:13px; font-weight:600; cursor:pointer;
     transition:transform .15s var(--ease), background .15s var(--ease);
   }
-  .repeat-chip:active{ background:var(--card2); transform:scale(.98); }
+  .repeat-chip:active{ background:color-mix(in srgb, var(--accent) 26%, transparent); transform:scale(.98); }
 
-  .search-row{ padding:0 18px 10px; }
-  .search-row input{
-    width:100%; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:14px;
-    padding:10px 14px; color:var(--text); font-size:13px; text-align:right;
+  /* iOS search field: a filled pill with the glyph inside it. A bare
+     bordered box the same size and colour as every other box on screen
+     gives the eye nothing to identify it by. */
+  .search-row{ padding:0 var(--gut) 10px; }
+  .search-wrap{
+    display:flex; align-items:center; gap:7px;
+    background:var(--sur-3); border-radius:var(--r-sm);
+    padding:0 11px; height:38px;
+    transition:box-shadow .15s var(--ease);
   }
-  .search-row input::placeholder{ color:var(--text-dim); }
-  .search-row input:focus{ outline:none; border-color:var(--accent); }
+  .search-wrap:focus-within{ box-shadow:0 0 0 2.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+  .search-wrap svg{ color:var(--text-3); flex-shrink:0; }
+  .search-row input{
+    flex:1; min-width:0; background:none; border:0; border-radius:0;
+    padding:0; color:var(--text); font-size:14px; text-align:right;
+    font-family:inherit;
+  }
+  .search-row input::placeholder{ color:var(--text-3); }
+  .search-row input:focus{ outline:none; }
 
-  /* period filter — a single segmented control, not floating individual pills */
+  /* period filter — a true segmented control: one recessed track with a
+     single raised thumb. Before, the "active" chip was a slightly lighter
+     grey on grey, which read as a hover state rather than a selection. */
   .filter-row{
-    display:flex; gap:2px; margin:0 18px 12px; padding:3px;
-    background:var(--card); border-radius:12px;
+    display:flex; gap:0; margin:0 var(--gut) 20px; padding:2px;
+    background:rgba(118,118,128,.18); border-radius:9px;
     overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none;
   }
   .filter-row::-webkit-scrollbar{ width:0; height:0; background:transparent; }
   .filter-chip{
-    flex:1 0 auto; padding:7px 14px; border-radius:9px; text-align:center;
-    color:var(--text-dim); font-size:12.5px;
-    font-weight:600; cursor:pointer; white-space:nowrap;
-    transition:background .15s var(--ease), color .15s var(--ease), transform .15s var(--ease);
+    position:relative;
+    flex:1 0 auto; padding:6px 12px; border-radius:7px; text-align:center;
+    color:var(--text); font-size:12.5px;
+    font-weight:500; cursor:pointer; white-space:nowrap;
+    transition:background .22s var(--ease), color .22s var(--ease), font-weight .2s;
   }
-  .filter-chip:active{ transform:scale(.96); }
-  .filter-chip.active{ background:var(--card2); color:var(--text); }
+  /* hairline divider between unselected segments, hidden next to the thumb */
+  .filter-chip:not(:first-child)::before{
+    content:''; position:absolute; inset-block:5px; inset-inline-start:0;
+    width:1px; background:var(--hair); transition:opacity .2s;
+  }
+  .filter-chip.active::before,
+  .filter-chip.active + .filter-chip::before{ opacity:0; }
+  .filter-chip:active{ opacity:.6; }
+  .filter-chip.active{
+    background:var(--sur-hi); color:var(--text); font-weight:600;
+    box-shadow:0 2px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.07);
+  }
 
   .range-picker{
     display:none; align-items:center; gap:6px; padding:0 18px 12px;
   }
   .range-picker.show{ display:flex; }
   .range-picker input[type=date]{
-    flex:1; min-width:0; background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:12px;
+    flex:1; min-width:0; background:var(--sur-3); border:0; border-radius:12px;
     padding:8px 10px; color:var(--text); font-size:12.5px; color-scheme:dark;
   }
   .range-picker span{ color:var(--text-dim); font-size:12px; }
@@ -323,76 +413,129 @@
 
   /* part-to-whole stacked bar */
   .chart-card{
-    margin:0 18px 14px; background:var(--glass-bg);
-    border:1px solid var(--glass-border); border-radius:16px; padding:14px 16px 16px;
-    box-shadow:0 2px 10px rgba(0,0,0,.3);
+    margin:0 var(--gut) 22px; background:var(--sur-2);
+    border:0; border-radius:var(--r-lg); padding:15px 16px 14px;
+    box-shadow:var(--shadow-card);
   }
-  .chart-card .chart-title{ font-size:13px; color:var(--text-dim); margin-bottom:10px; }
+  .chart-card .chart-title{
+    font-size:12px; font-weight:600; color:var(--text-3);
+    letter-spacing:.02em; margin-bottom:12px;
+  }
+  /* rounded track + gaps punched between segments. A hard-edged bar with
+     2px dark borders reads as a progress bar someone broke. */
   .stack-bar{
-    display:flex; width:100%; height:22px; border-radius:6px; overflow:hidden;
-    background:var(--chart-gridline);
+    display:flex; gap:2px; width:100%; height:10px;
+    border-radius:99px; overflow:hidden; background:var(--sur-3);
   }
   .stack-seg{
-    height:100%; min-width:3px; cursor:pointer;
-    border-left:2px solid var(--chart-surface);
-    transition:filter .15s, outline .15s;
+    height:100%; min-width:4px; cursor:pointer; border:0; border-radius:99px;
+    transition:filter .18s var(--ease), opacity .18s var(--ease);
   }
-  .stack-seg:first-child{ border-left:none; }
-  .stack-seg.dim{ filter:brightness(.55); }
-  .stack-seg.hi{ outline:2px solid rgba(255,255,255,.8); outline-offset:-2px; }
-  .legend{ margin-top:12px; display:flex; flex-direction:column; gap:2px; }
+  .stack-seg.dim{ filter:saturate(.35); opacity:.4; }
+  .stack-seg.hi{ filter:brightness(1.15); }
+  .legend{ margin-top:14px; display:flex; flex-direction:column; }
+  /* the percentage drops to tertiary grey and loses its fixed 34px column,
+     so it trails the name as a caption instead of forming a second hard
+     numeric column next to the amount — two aligned number columns on a
+     six-row list is what made this read as a report rather than a summary */
   .legend-row{
-    display:flex; align-items:center; gap:10px; padding:7px 4px; border-radius:8px; cursor:pointer;
+    display:flex; align-items:center; gap:10px; padding:7px 2px; cursor:pointer;
+    border-radius:var(--r-xs);
+    transition:opacity .18s var(--ease), background .12s var(--ease);
   }
-  .legend-row.dim{ opacity:.45; }
-  .legend-swatch{ width:10px; height:10px; border-radius:2px; flex-shrink:0; }
-  .legend-name{ flex:1; font-size:13.5px; color:var(--text); }
-  .legend-pct{ font-size:12px; color:var(--chart-muted); width:34px; text-align:left; }
-  .legend-amt{ font-size:13.5px; font-weight:700; color:var(--text); direction:ltr; min-width:56px; text-align:left; }
-  .chart-empty{ text-align:center; color:var(--text-dim); font-size:12.5px; padding:14px 0 2px; }
-  .insight{ margin-top:10px; padding-top:10px; border-top:1px solid var(--sep); font-size:12px; color:var(--text-dim); line-height:1.5; }
+  .legend-row:active{ background:var(--sur-3); }
+  .legend-row.dim{ opacity:.35; }
+  .legend-swatch{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+  .legend-name{
+    flex:1; min-width:0; font-size:14px; color:var(--text); font-weight:450;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .legend-pct{ font-size:12px; color:var(--text-3); flex-shrink:0; }
+  .legend-amt{
+    font-size:14px; font-weight:600; color:var(--text); direction:ltr;
+    flex-shrink:0; letter-spacing:-.02em;
+  }
+  .chart-empty{ text-align:center; color:var(--text-3); font-size:12.5px; padding:16px 0 4px; }
+  .insight{
+    margin-top:12px; padding-top:12px; border-top:1px solid var(--hair);
+    font-size:12.5px; color:var(--text-2); line-height:1.55;
+  }
 
   /* ---------- Hero card: total + budget ring + comparison, one widget
      instead of three separate boxes stacked on top of each other ---------- */
   .hero-card{
-    margin:0 18px 12px; padding:16px 16px 14px;
-    background:linear-gradient(135deg, #3a3f6b 0%, #5b3a63 55%, #7a3f52 100%);
-    position:relative; overflow:hidden; border-radius:20px;
-    box-shadow:0 4px 16px rgba(0,0,0,.4);
-    display:flex; flex-direction:column; gap:12px;
+    margin:0 var(--gut) 22px; padding:18px 18px 16px;
+    /* darker and less saturated than before. The old card was the only
+       bright object on a black screen, which made it read as a sticker
+       pasted on rather than the top of a hierarchy. */
+    background:linear-gradient(145deg, #2b2f52 0%, #432f4d 58%, #5a2f3e 100%);
+    position:relative; overflow:hidden; border-radius:var(--r-xl);
+    box-shadow:0 10px 30px -8px rgba(0,0,0,.7);
+    display:flex; flex-direction:column; gap:16px;
   }
   .hero-card::after{
     content:''; position:absolute; inset:0; pointer-events:none;
-    background:radial-gradient(120% 90% at 90% -20%, rgba(255,255,255,.22), transparent 60%);
+    background:radial-gradient(130% 100% at 88% -25%, rgba(255,255,255,.14), transparent 62%);
+  }
+  /* a hairline top edge is what makes a dark card look lit rather than flat */
+  .hero-card::before{
+    content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
   }
   .hero-card > *{ position:relative; }
   .hero-top{ display:flex; justify-content:space-between; align-items:flex-start; }
-  .hero-label{ color:rgba(255,255,255,.75); font-size:13px; }
-  .hero-num{
-    font-size:28px; font-weight:900; direction:ltr; display:block; margin-top:2px;
-    color:#fff; letter-spacing:-0.02em; font-variant-numeric:tabular-nums;
+  .hero-label{
+    color:rgba(255,255,255,.62); font-size:12px; font-weight:600;
+    letter-spacing:.02em;
   }
+  .hero-num{
+    font-size:40px; font-weight:800; direction:ltr; display:block; margin-top:4px;
+    color:#fff; letter-spacing:-0.035em; line-height:1;
+  }
+
+  /* budget: a full-width track, not a 36px ring squeezed beside two
+     lines of text. At this width a bar is legible at a glance and the
+     numbers get to sit on their own baseline instead of wrapping. */
   .hero-budget{
-    display:none; align-items:center; gap:12px;
-    padding-top:12px; border-top:1px solid rgba(255,255,255,.15);
+    display:none; flex-direction:column; gap:8px;
+    padding-top:15px; border-top:1px solid rgba(255,255,255,.13);
   }
   .hero-budget.show{ display:flex; }
-  .hero-ring{
-    width:36px; height:36px; border-radius:50%; flex-shrink:0;
-    background:conic-gradient(var(--ring-color,#fff) calc(var(--ratio,0) * 360deg), rgba(255,255,255,.25) 0);
-    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
-    mask:radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
-    transition:background .35s;
+  .hero-budget-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
   }
-  .hero-budget-text{ flex:1; min-width:0; }
-  .hero-budget-status{ font-size:12px; font-weight:700; }
+  .hero-budget-status{ font-size:12.5px; font-weight:700; }
+  .hero-budget-left{
+    font-size:12.5px; font-weight:700; color:#fff; white-space:nowrap;
+  }
+  /* same element + same custom props as the old ring, restyled as a track,
+     so nothing in renderBudget() had to change */
+  .hero-ring{
+    position:relative; width:100%; height:7px; border-radius:99px;
+    background:rgba(255,255,255,.18); overflow:hidden;
+  }
+  .hero-ring::after{
+    content:''; position:absolute; inset:0; inset-inline-end:auto;
+    width:calc(var(--ratio, 0) * 100%);
+    border-radius:99px; background:var(--ring-color, #fff);
+    transition:width .5s var(--ease), background .35s;
+  }
   .hero-budget-nums{
-    display:flex; justify-content:space-between; margin-top:3px; gap:8px;
-    font-size:11.5px; direction:ltr; color:rgba(255,255,255,.8);
+    display:flex; justify-content:flex-start;
+    font-size:11.5px; color:rgba(255,255,255,.62);
+  }
+  /* A money value is an LTR island. Forcing direction:ltr on a whole line
+     that also contains a Hebrew word ("₪677 מתוך ₪2,500") reorders the
+     Hebrew too and the sentence comes out backwards; isolating just the
+     number keeps the sentence RTL and the ₪ glued to the left of its
+     digits, which is the only arrangement that's correct in both. */
+  .money{
+    direction:ltr; unicode-bidi:isolate; display:inline-block;
+    font-variant-numeric:tabular-nums;
   }
   .hero-hint{
-    display:none; padding-top:12px; border-top:1px solid rgba(255,255,255,.15);
-    color:rgba(255,255,255,.85); font-size:12.5px; text-align:center; cursor:pointer;
+    display:none; padding-top:14px; border-top:1px solid rgba(255,255,255,.13);
+    color:rgba(255,255,255,.8); font-size:12.5px; cursor:pointer;
   }
   .hero-hint.show{ display:block; }
   .hero-compare{
@@ -401,46 +544,89 @@
 
   /* ---------- Expense list: one grouped container with hairline dividers,
      not a floating bordered card per row ---------- */
-  .list{ margin:0 18px 90px; background:var(--card); border-radius:16px; overflow:hidden; }
-  .list .empty{ margin:0; padding:40px 0; }
-  .row{
-    display:flex; align-items:center; gap:10px; cursor:pointer;
-    background:color-mix(in srgb, var(--cat-color, transparent) 10%, transparent);
-    border-bottom:1px solid var(--sep); padding:12px 14px;
-    transition:background .15s var(--ease);
+  .list{
+    margin:0 var(--gut) 100px; background:var(--sur-2);
+    border-radius:var(--r-lg); overflow:hidden;
   }
-  .row:last-child{ border-bottom:none; }
-  .row:active{ background:color-mix(in srgb, var(--cat-color, transparent) 20%, var(--card2)); }
-  .row .dot{ width:7px; height:7px; border-radius:50%; background:var(--cat-color, var(--text-dim)); flex-shrink:0; }
-  .row .emoji{ font-size:20px; width:26px; text-align:center;}
-  .row .info{ flex:1; }
-  .row .cat{ font-size:14px; font-weight:600;}
-  .row .note{ font-size:12px; color:var(--text-dim); margin-top:1px; }
-  .row .time{ font-size:11px; color:var(--text-dim); margin-top:1px; }
-  .row .amt{ font-size:15px; font-weight:700; direction:ltr; }
-  .section-head{ margin:0 20px 8px; font-size:11.5px; font-weight:700; color:var(--text-dim); }
+  .list .empty{ margin:0; padding:44px 20px; }
+  /* Every row used to be washed in a 10% tint of its own category colour,
+     so eight expenses meant eight coloured bands stacked up — the loudest
+     "amateur" signal in the app. Colour now lives in one small chip per
+     row; the row itself stays neutral, which is what lets the amounts and
+     the separators read as an ordered table instead of a pile. */
+  .row{
+    display:flex; align-items:center; gap:12px; cursor:pointer;
+    background:transparent; padding:10px 14px; position:relative;
+    transition:background .12s var(--ease);
+  }
+  /* separator inset to the text edge, iOS-style — a full-bleed rule between
+     every row is what makes a grouped list look like a spreadsheet */
+  .row:not(:last-child)::after{
+    content:''; position:absolute; bottom:0;
+    inset-inline-start:64px; inset-inline-end:0;
+    height:1px; background:var(--hair);
+  }
+  .row:active{ background:var(--sur-3); }
+  .row .emoji{
+    flex-shrink:0; width:38px; height:38px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px; line-height:1;
+    background:color-mix(in srgb, var(--cat-color, var(--text-3)) 26%, var(--sur-3));
+  }
+  .row .info{ flex:1; min-width:0; }
+  .row .cat{ font-size:15px; font-weight:500; letter-spacing:-.01em; }
+  .row .note{
+    font-size:13px; color:var(--text-2); margin-top:1px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .row .time{ font-size:12px; color:var(--text-3); margin-top:1px; }
+  .row .amt{
+    font-size:16px; font-weight:600; direction:ltr; letter-spacing:-.02em; flex-shrink:0;
+  }
+  /* a glyph + a line of guidance, instead of one grey sentence floating in
+     a 350px-tall empty box */
+  .empty-ico{
+    width:46px; height:46px; margin:0 auto 12px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--sur-3); color:var(--text-3);
+  }
+  .empty-title{ color:var(--text-2); font-size:14.5px; font-weight:600; margin-bottom:3px; }
+  .empty-sub{ color:var(--text-3); font-size:12.5px; }
+  /* section header: smaller and wider-tracked — the iOS grouped-table
+     convention, so it reads as a label rather than as body copy */
+  .section-head{
+    margin:0 calc(var(--gut) + 4px) 7px; font-size:12px; font-weight:600;
+    color:var(--text-3); letter-spacing:.02em;
+  }
   .empty{ text-align:center; color:var(--text-dim); font-size:13px; margin-top:60px; }
 
   .settings-panel{
-    padding:16px 18px; display:none; flex-direction:column; gap:10px;
+    padding:4px var(--gut) 40px; display:none; flex-direction:column; gap:9px;
   }
   .settings-panel.show{ display:flex; }
+  /* settings is a screen of its own — the floating add button has nothing
+     to act on there, so it steps out rather than hovering over the form */
+  .screen.settings-open .fab{ opacity:0; pointer-events:none; transform:scale(.7); }
+  /* each `label` starts a new group: extra air above it, and a hairline to
+     make the grouping visible instead of implied by spacing alone */
+  .settings-panel > label:not(.switch){ margin-top:18px; padding-top:18px; border-top:1px solid var(--hair); }
+  .settings-panel > label:first-child{ margin-top:4px; padding-top:0; border-top:0; }
   /* while settings are open, it behaves like its own screen — everything
      below it (budget, chart, expense list...) is hidden, not just pushed down */
   .settings-panel.show ~ *{ display:none !important; }
-  .settings-panel label{ font-size:12px; color:var(--text-dim); }
+  .settings-panel label{ font-size:12px; font-weight:600; color:var(--text-3); letter-spacing:.02em; }
   .settings-panel input, .budget-value-btn{
-    background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:12px;
+    background:var(--sur-3); border:0; border-radius:12px;
     padding:10px 12px; color:var(--text); font-size:13px; direction:ltr; text-align:left;
   }
   .settings-panel input:focus{ outline:none; border-color:var(--accent); }
   .budget-value-btn{ cursor:pointer; }
   .budget-value-btn:active{ border-color:var(--accent); }
-  .settings-panel .note{ font-size:11px; color:var(--text-dim); line-height:1.5; }
+  .settings-panel .note{ font-size:11.5px; color:var(--text-3); line-height:1.55; }
   .custom-cat-list{ display:flex; flex-wrap:wrap; gap:6px; }
   .custom-cat-chip{
     display:flex; align-items:center; gap:6px; padding:5px 6px 5px 10px; border-radius:14px;
-    background:var(--glass-bg-strong); border:1px solid var(--glass-border); font-size:12px;
+    background:var(--sur-3); border:0; font-size:12px;
   }
   .custom-cat-chip .remove{
     color:var(--red); cursor:pointer; font-weight:700; width:18px; height:18px; border-radius:50%;
@@ -453,7 +639,7 @@
   .custom-select{ position:relative; width:100%; }
   .custom-select-trigger{
     width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
-    background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:12px;
+    background:var(--sur-3); border:0; border-radius:12px;
     padding:10px 12px; color:var(--text); font-size:13px; font-family:inherit; cursor:pointer;
   }
   .custom-select.open .custom-select-trigger{ border-color:var(--accent); }
@@ -464,7 +650,7 @@
     position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:30;
     max-height:220px; overflow-y:auto;
     background:rgba(44,44,46,.97); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%);
-    border:1px solid var(--glass-border); border-radius:14px; padding:6px;
+    border:1px solid var(--hair); border-radius:14px; padding:6px;
     box-shadow:0 14px 34px rgba(0,0,0,.55);
     scrollbar-width:none; -ms-overflow-style:none;
     /* origin-aware entrance: scales from the trigger it came from, not from
@@ -477,14 +663,14 @@
   .custom-select-option{
     padding:10px 12px; border-radius:10px; font-size:13px; cursor:pointer; color:var(--text);
   }
-  .custom-select-option:active{ background:var(--glass-bg-strong); }
+  .custom-select-option:active{ background:var(--sur-hi); }
   .custom-select-option.selected{
     background:var(--accent); color:#fff; font-weight:600;
   }
   .recur-list{ margin-top:8px; }
   .recur-row{
     display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px;
-    background:var(--glass-bg-strong); border:1px solid var(--glass-border); margin-bottom:6px; font-size:12.5px;
+    background:var(--sur-3); border:0; margin-bottom:6px; font-size:12.5px;
   }
   .recur-row .info{ flex:1; }
   .recur-row .remove{
@@ -498,7 +684,7 @@
   }
   .cat-budget-row .name{ flex:1; font-size:13px; }
   .cat-budget-row .val{
-    background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:10px;
+    background:var(--sur-3); border:0; border-radius:10px;
     padding:6px 10px; font-size:12.5px; cursor:pointer; direction:ltr; min-width:64px; text-align:center;
   }
   .legend-budget-tag{ font-size:11px; font-weight:700; margin-inline-start:6px; }
@@ -506,8 +692,8 @@
   .switch{ direction:ltr; position:relative; display:inline-block; width:44px; height:26px; flex-shrink:0; }
   .switch input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; z-index:1; }
   .switch-track{
-    position:absolute; inset:0; background:var(--glass-bg-strong);
-    border:1px solid var(--glass-border); border-radius:999px; transition:.2s; pointer-events:none;
+    position:absolute; inset:0; background:rgba(120,120,128,.32);
+    border-radius:999px; transition:.2s; pointer-events:none;
   }
   .switch-track::before{
     content:''; position:absolute; height:20px; width:20px; left:2px; top:2px;
@@ -525,16 +711,25 @@
 
   /* floating "+" button — the way to log an expense from inside the app */
   .fab{
-    position:absolute; left:18px; bottom:26px;
-    width:52px; height:52px; border-radius:50%;
-    background:var(--accent); color:#fff;
+    position:absolute; left:var(--gut); bottom:28px;
+    width:58px; height:58px; border-radius:50%;
+    /* a lit sphere rather than a flat disc: a top-down gradient plus a
+       coloured shadow in the button's own hue, which is what separates an
+       iOS-feeling control from a Material circle */
+    background:linear-gradient(180deg, #3f9dff 0%, var(--accent) 55%, #0069d9 100%);
+    color:#fff;
     display:flex; align-items:center; justify-content:center;
-    font-size:28px; font-weight:600; line-height:1;
-    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    line-height:1;
+    box-shadow:0 8px 22px -4px rgba(10,132,255,.55), 0 3px 10px rgba(0,0,0,.45),
+               inset 0 1px 0 rgba(255,255,255,.3);
     cursor:pointer; z-index:45;
-    transition:transform .15s var(--ease), opacity .15s var(--ease);
+    transition:transform .22s var(--ease), box-shadow .22s var(--ease);
   }
-  .fab:active{ opacity:.8; transform:scale(.94); }
+  .fab:active{
+    transform:scale(.9);
+    box-shadow:0 3px 10px -2px rgba(10,132,255,.5), 0 1px 4px rgba(0,0,0,.4),
+               inset 0 1px 0 rgba(255,255,255,.3);
+  }
 
   /* reduced motion means gentler feedback, not none — press/selection states
      (background, opacity, color) stay; only the sliding/scaling movement drops */
@@ -571,7 +766,9 @@
     .screen{ border-radius:0; }
     .notch{ display:none; }
     .status-bar{ padding-top:calc(env(safe-area-inset-top) + 10px); }
-    .list{ padding-bottom:calc(90px + env(safe-area-inset-bottom)); }
+    /* clearance for the FAB belongs OUTSIDE the card — as padding it left
+       a blank tail hanging off the bottom of the grouped list */
+    .list{ margin-bottom:calc(100px + env(safe-area-inset-bottom)); }
     .fab{ bottom:calc(26px + env(safe-area-inset-bottom)); }
   }
 
@@ -605,13 +802,15 @@
       <div class="status-bar"></div>
       <div class="scroll-area" id="scrollArea">
       <div class="history-header">
-        <span class="header-btn" id="homeBtn" role="button" aria-label="מסך הבית">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
-        </span>
+        <div class="header-actions">
+          <span class="header-btn" id="gearBtn" role="button" aria-label="הגדרות">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </span>
+          <span class="header-btn" id="homeBtn" role="button" aria-label="מסך הבית">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+          </span>
+        </div>
         <h1>הוצאות</h1>
-        <span class="header-btn" id="gearBtn" role="button" aria-label="הגדרות">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </span>
       </div>
 
       <div class="settings-panel" id="settingsPanel">
@@ -675,13 +874,13 @@
         </div>
 
         <div class="hero-budget" id="budgetCard">
+          <div class="hero-budget-head">
+            <span class="hero-budget-status" id="budgetStatus"></span>
+            <span class="hero-budget-left" id="budgetLeftLabel"></span>
+          </div>
           <div class="hero-ring" id="budgetRing"></div>
-          <div class="hero-budget-text">
-            <div class="hero-budget-status" id="budgetStatus"></div>
-            <div class="hero-budget-nums">
-              <span id="budgetSpentLabel">₪0 מתוך ₪0</span>
-              <span id="budgetLeftLabel"></span>
-            </div>
+          <div class="hero-budget-nums">
+            <span id="budgetSpentLabel">₪0 מתוך ₪0</span>
           </div>
         </div>
 
@@ -693,7 +892,10 @@
       <div class="repeat-chip" id="repeatChip"></div>
 
       <div class="search-row">
-        <input id="searchInput" type="text" placeholder="חיפוש לפי קטגוריה או תיאור...">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="searchInput" type="text" placeholder="חיפוש">
+        </div>
       </div>
 
       <div class="filter-row" id="filterRow"></div>
@@ -754,7 +956,9 @@
       <div class="toast" id="toast">נשמר בהצלחה ✓</div>
 
       <!-- MANUAL ADD -->
-      <div class="fab" id="fabAdd" role="button" aria-label="הוסף הוצאה">+</div>
+      <div class="fab" id="fabAdd" role="button" aria-label="הוסף הוצאה">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      </div>
 
     </div>
   </div>
@@ -810,6 +1014,8 @@
   // history for a since-deleted custom category still gets a sensible tint
   const categoryColor = key => (allCategories().find(c => c.key === key) || {}).color || 'var(--text-dim)';
   const fmtMoney = n => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  // a shekel amount as an LTR island — safe to drop inside a Hebrew sentence
+  const money = n => `<span class="money">₪${fmtMoney(n)}</span>`;
   // every value below comes from the user (custom category name/emoji, expense
   // note) and later gets interpolated into innerHTML template strings — without
   // this, typing something like <img src=x onerror=...> as a note would run as
@@ -1202,6 +1408,19 @@
     renderHistory();
   };
 
+  // one empty state, used for every "nothing here" case in the list
+  const EMPTY_STATE_HTML = ([title, sub]) => `
+    <div class="empty" id="emptyMsg">
+      <div class="empty-ico">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/>
+        </svg>
+      </div>
+      <div class="empty-title">${escapeHtml(title)}</div>
+      <div class="empty-sub">${escapeHtml(sub)}</div>
+    </div>`;
+
   function renderHistory(){
     renderFilters();
     const items = filteredExpenses();
@@ -1209,14 +1428,15 @@
     const list = $('historyList');
     list.innerHTML = '';
     if(items.length===0){
-      list.innerHTML = '<div class="empty" id="emptyMsg">אין הוצאות בתקופה זו</div>';
+      list.innerHTML = EMPTY_STATE_HTML(searchQuery
+        ? ['לא נמצאו תוצאות', 'נסה מונח חיפוש אחר']
+        : ['אין הוצאות בתקופה זו', 'החלף סינון או הוסף הוצאה חדשה']);
     } else {
       items.forEach(e=>{
         const row = document.createElement('div');
         row.className='row';
         row.style.setProperty('--cat-color', categoryColor(e.category));
         row.innerHTML = `
-          <div class="dot"></div>
           <div class="emoji">${escapeHtml(e.emoji)}</div>
           <div class="info">
             <div class="cat">${escapeHtml(e.category)}</div>
@@ -1254,7 +1474,7 @@
     const weeks = Math.max(1, (Date.now() - oldestTs) / (7 * 86400000));
     const perWeek = amt / weeks;
     el.style.display = 'block';
-    el.textContent = `💡 בממוצע אתה מוציא ₪${fmtMoney(perWeek)} על ${catKey} בשבוע`;
+    el.innerHTML = `💡 בממוצע אתה מוציא ${money(perWeek)} על ${escapeHtml(catKey)} בשבוע`;
   }
 
   // counts up/down from whatever's currently shown rather than jumping — a
@@ -1325,7 +1545,7 @@
     if(!expenses.length){ chip.style.display = 'none'; return; }
     const last = expenses[0];
     chip.style.display = 'flex';
-    chip.innerHTML = `<span>🔁 חזור על: ${escapeHtml(last.emoji)} ${escapeHtml(last.category)} · ₪${fmtMoney(last.amount)}</span>`;
+    chip.innerHTML = `<span>🔁 חזור על: ${escapeHtml(last.emoji)} ${escapeHtml(last.category)} · ${money(last.amount)}</span>`;
     chip.onclick = ()=> repeatLastExpense(last);
   }
   function repeatLastExpense(last){
@@ -1375,12 +1595,14 @@
     ring.style.setProperty('--ring-color', color);
 
     $('budgetStatus').innerHTML = `<span style="color:${color}">${icon} ${label}</span>`;
-    $('budgetSpentLabel').textContent = `₪${fmtMoney(spent)} מתוך ₪${fmtMoney(budget)}`;
+    // each amount is its own LTR island so the Hebrew around it keeps its order
+    $('budgetSpentLabel').innerHTML =
+      `${money(spent)} מתוך ${money(budget)}`;
 
     const remaining = budget - spent;
-    $('budgetLeftLabel').textContent = remaining >= 0
-      ? `נותרו ₪${fmtMoney(remaining)}`
-      : `חריגה של ₪${fmtMoney(Math.abs(remaining))}`;
+    $('budgetLeftLabel').innerHTML = remaining >= 0
+      ? `נותרו ${money(remaining)}`
+      : `חריגה של ${money(Math.abs(remaining))}`;
   }
 
   function renderChart(items, total){
@@ -1390,11 +1612,13 @@
     stackBar.innerHTML = '';
     legend.innerHTML = '';
 
+    // with nothing to chart, a card saying "no data" is just another empty
+    // box in the stack — the list's empty state already says it once
     if(items.length===0 || total<=0){
-      card.querySelector('.stack-bar').style.display='none';
-      card.querySelector('.legend').innerHTML = '<div class="chart-empty">אין נתונים להצגה</div>';
+      card.style.display = 'none';
       return;
     }
+    card.style.display = '';
     card.querySelector('.stack-bar').style.display='flex';
 
     // group by category name as stored on each expense — not by the live category
@@ -1456,6 +1680,7 @@
   }
   function openSettings(){
     $('settingsPanel').classList.add('show');
+    syncSettingsChrome();
     $('sheetUrlInput').value = localStorage.getItem('sheetUrl') || '';
     $('syncTokenInput').value = localStorage.getItem('syncToken') || '';
     $('reminderToggle').checked = localStorage.getItem('dailyReminder') === '1';
@@ -1476,21 +1701,29 @@
     const loggedToday = expenses.some(e => (e.ts || 0) >= todayStart);
     if(!loggedToday) showToast('עוד לא רשמת הוצאה היום 👀');
   }
+  // settings is its own screen, so the "add expense" button doesn't belong
+  // floating over it — it has nothing to act on there
+  const syncSettingsChrome = ()=>
+    $('screen').classList.toggle('settings-open', $('settingsPanel').classList.contains('show'));
+
   $('gearBtn').onclick = ()=>{
     if($('settingsPanel').classList.contains('show')){
       $('settingsPanel').classList.remove('show');
     } else {
       openSettings();
     }
+    syncSettingsChrome();
   };
   $('homeBtn').onclick = ()=>{
     $('settingsPanel').classList.remove('show');
+    syncSettingsChrome();
     $('scrollArea').scrollTop = 0;
   };
   $('saveUrlBtn').onclick = ()=>{
     saveKey('sheetUrl', $('sheetUrlInput').value.trim());
     saveKey('syncToken', $('syncTokenInput').value.trim());
     $('settingsPanel').classList.remove('show');
+    syncSettingsChrome();
     showToast();
   };
 
@@ -1663,7 +1896,7 @@
     recurringExpenses.forEach((r, i)=>{
       const row = document.createElement('div');
       row.className = 'recur-row';
-      row.innerHTML = `<span class="info">${escapeHtml(r.emoji)} ${escapeHtml(r.note || r.category)} · ₪${fmtMoney(r.amount)} · ה-${r.day}</span><span class="remove" role="button" aria-label="מחק הוצאה קבועה">✕</span>`;
+      row.innerHTML = `<span class="info">${escapeHtml(r.emoji)} ${escapeHtml(r.note || r.category)} · ${money(r.amount)} · ה-${r.day}</span><span class="remove" role="button" aria-label="מחק הוצאה קבועה">✕</span>`;
       row.querySelector('.remove').onclick = ()=>{
         recurringExpenses.splice(i, 1);
         saveKey('recurringExpenses', JSON.stringify(recurringExpenses));
@@ -1767,7 +2000,7 @@
     $('printReport').innerHTML = `
       <h1>דוח הוצאות</h1>
       <div class="print-meta">${FILTERS.find(f=>f.key===activeFilter).label} · הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
-      <div class="print-total">סה"כ: ₪${fmtMoney(total)}</div>
+      <div class="print-total">סה"כ: ${money(total)}</div>
       <h2>לפי קטגוריה</h2>
       <table>${catRows}</table>
       <h2>כל ההוצאות (${items.length})</h2>
@@ -1825,9 +2058,20 @@
   // blocked along with the zoom, so we re-fire it manually so a fast "00" on
   // the keypad still registers as two presses instead of being swallowed.
   let lastTouchEnd = 0, lastTouchTarget = null;
+  // A tap often lands on a child of the thing that actually handles it (an
+  // icon's <path>, a row's label). Only HTMLElement has .click(); SVG
+  // elements don't have it at all — so resolve up to the nearest node that
+  // can actually be re-fired before doing anything else. Getting this wrong
+  // swallows the tap completely, because preventDefault() has already
+  // killed the real click by the time the re-fire fails.
+  const clickable = node => {
+    while(node && typeof node.click !== 'function') node = node.parentElement;
+    return node;
+  };
   document.addEventListener('touchend', e=>{
     const now = Date.now();
-    const target = e.target;
+    const target = clickable(e.target);
+    if(!target) { lastTouchEnd = now; lastTouchTarget = null; return; }
     if(now - lastTouchEnd <= 300 && target === lastTouchTarget){
       e.preventDefault();
       target.click();
