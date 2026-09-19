@@ -217,13 +217,10 @@
     transition:background .15s var(--ease), transform .15s var(--ease);
   }
   .cat-btn:active{ background:var(--sur-hi); transform:scale(.95); }
-  /* same rounded-square chip as the history rows, so a category looks like
-     the same object in both places */
-  .cat-btn .emoji{
-    font-size:20px; width:42px; height:42px; border-radius:13px;
-    display:flex; align-items:center; justify-content:center;
-    background:color-mix(in srgb, var(--cat-color, var(--text-3)) 28%, var(--sur-hi));
-  }
+  /* bare emoji, no chip behind it — six different tinted squares in one grid
+     was the "circles everywhere" look; the emoji itself already carries the
+     colour and meaning, so the frame was pure noise on top of it */
+  .cat-btn .emoji{ font-size:30px; line-height:1; }
   /* "most recent" is a hint, not a selection — a ring around the whole tile
      competed with the real selected state, so it's a small dot instead */
   .cat-btn.recent::after{
@@ -1112,7 +1109,6 @@
     orderedCategories().forEach(c=>{
       const b = document.createElement('div');
       b.className = 'cat-btn' + (c.key === lastUsedCategoryKey ? ' recent' : '');
-      b.style.setProperty('--cat-color', c.color);
       b.innerHTML = `<span class="emoji">${escapeHtml(c.emoji)}</span><span>${escapeHtml(c.key)}</span>`;
       b.onclick = ()=> selectCategory(c);
       grid.appendChild(b);
