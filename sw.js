@@ -1,4 +1,4 @@
-const CACHE = 'apay-tracker-v34';
+const CACHE = 'apay-tracker-v35';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
