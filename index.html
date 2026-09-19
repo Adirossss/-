@@ -565,10 +565,9 @@
   }
   .row:active{ background:var(--sur-3); }
   .row .emoji{
-    flex-shrink:0; width:38px; height:38px; border-radius:11px;
+    flex-shrink:0; width:38px;
     display:flex; align-items:center; justify-content:center;
-    font-size:19px; line-height:1;
-    background:color-mix(in srgb, var(--cat-color, var(--text-3)) 26%, var(--sur-3));
+    font-size:26px; line-height:1;
   }
   .row .info{ flex:1; min-width:0; }
   .row .cat{ font-size:15px; font-weight:500; letter-spacing:-.01em; }
@@ -1007,9 +1006,6 @@
 
   const $ = id => document.getElementById(id);
   const allCategories = () => [...CATEGORIES, ...customCategories];
-  // looks up by the category name stored on the expense, not the live list, so
-  // history for a since-deleted custom category still gets a sensible tint
-  const categoryColor = key => (allCategories().find(c => c.key === key) || {}).color || 'var(--text-dim)';
   const fmtMoney = n => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
   // a shekel amount as an LTR island — safe to drop inside a Hebrew sentence
   const money = n => `<span class="money">₪${fmtMoney(n)}</span>`;
@@ -1373,7 +1369,14 @@
     }
     return items;
   }
-  $('searchInput').oninput = (e)=>{ searchQuery = e.target.value.trim().toLowerCase(); renderHistory(); };
+  // typing fires a full list+chart rebuild — coalescing to one rebuild per
+  // pause (rather than one per keystroke) is what keeps fast typing smooth
+  let searchDebounce = null;
+  $('searchInput').oninput = (e)=>{
+    searchQuery = e.target.value.trim().toLowerCase();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(renderHistory, 150);
+  };
 
   function renderFilters(){
     const row = $('filterRow');
@@ -1431,7 +1434,6 @@
       items.forEach(e=>{
         const row = document.createElement('div');
         row.className='row';
-        row.style.setProperty('--cat-color', categoryColor(e.category));
         row.innerHTML = `
           <div class="emoji">${escapeHtml(e.emoji)}</div>
           <div class="info">
@@ -1476,6 +1478,7 @@
   // counts up/down from whatever's currently shown rather than jumping — a
   // small, cheap moment of feedback on every add/delete/filter change
   let displayedTotal = 0;
+  let totalAnimId = 0;
   function animateTotal(newTotal){
     const el = $('totalAmount');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1484,10 +1487,15 @@
       displayedTotal = newTotal;
       return;
     }
+    // a re-render (e.g. every search keystroke) used to start a second rAF
+    // loop on top of any still-running one, so several loops fought over the
+    // same text node at once — this id lets a fresh call cancel the old one
+    const myId = ++totalAnimId;
     const start = displayedTotal;
     const startTime = performance.now();
     const duration = 400;
     function step(now){
+      if(myId !== totalAnimId) return;
       const t = Math.min((now - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       el.textContent = fmtMoney(start + (newTotal - start) * eased);
