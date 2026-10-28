@@ -814,6 +814,47 @@
       font-size: 13px;
     }
 
+    /* month stepper — every month is its own page; the arrows walk back
+     through past months, the label jumps back to the current one */
+    .month-nav {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin: -8px var(--gut) 18px;
+    }
+
+    .month-nav.show {
+      display: flex;
+    }
+
+    .month-nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--sur-3);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .15s var(--ease), opacity .15s var(--ease);
+    }
+
+    .month-nav-btn:active {
+      transform: scale(.9);
+    }
+
+    .month-nav-btn.disabled {
+      opacity: .3;
+      pointer-events: none;
+    }
+
+    .month-nav-label {
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
     /* part-to-whole stacked bar */
     .chart-card {
       margin: 0 var(--gut) 22px;
@@ -1513,6 +1554,89 @@
       margin-inline-start: 6px;
     }
 
+    /* salary split — same card anatomy as the category chart, so it reads as
+     a sibling: title + amount on one line, a part-to-whole bar, a legend */
+    .salary-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .salary-head .chart-title {
+      margin-bottom: 0;
+    }
+
+    .salary-amt {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .salary-hint {
+      font-size: 13px;
+      color: var(--text-2);
+      cursor: pointer;
+    }
+
+    .bucket-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .settings-panel .bucket-row input {
+      min-width: 0;
+    }
+
+    .settings-panel .bucket-row .b-emoji {
+      width: 46px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .settings-panel .bucket-row .b-name {
+      flex: 1;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .settings-panel .bucket-row .b-pct {
+      width: 56px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .bucket-row .pct-sign {
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    .bucket-row .remove,
+    .bucket-row .remove-spacer {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .bucket-row .remove {
+      color: var(--red);
+      cursor: pointer;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 69, 58, .12);
+      transition: transform .15s var(--ease);
+    }
+
+    .bucket-row .remove:active {
+      transform: scale(.85);
+    }
+
     .switch {
       direction: ltr;
       position: relative;
@@ -1832,6 +1956,15 @@
               <div class="budget-value-btn" id="budgetValueBtn">הגדר תקציב</div>
               <div class="note">כמה כסף הקצבת לעצמך לבזבוזים החודש. תראה כמה נשאר לך בכרטיסייה "היסטוריה".</div>
 
+              <label style="margin-top:10px;">משכורת וחלוקה</label>
+              <div class="budget-value-btn" id="salaryValueBtn">הגדר משכורת</div>
+              <div id="bucketList" style="margin-top:4px;"></div>
+              <button class="btn ghost" id="addBucketBtn">הוסף יעד</button>
+              <div class="note" id="bucketSumNote" style="display:none; color:var(--status-warning);"></div>
+              <div class="note">כמה מהמשכורת הולך לכל יעד, באחוזים. אפשר לשנות שם ואימוג'י לכל יעד. השורה הראשונה היא
+                הבזבוזים — הסכום שלה הופך אוטומטית לתקציב החודשי. המשכורת נשמרת לכל חודש בנפרד, וחודש חדש מתחיל עם
+                המשכורת של החודש הקודם עד שמשנים אותה.</div>
+
               <label style="margin-top:10px;">כתובת ה-Web App של Google Apps Script</label>
               <input id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
               <div class="note">הדבק כאן את ה-URL שקיבלת מ-Deploy → New deployment בגוגל אפס סקריפט. הרישום יישלח
@@ -1933,11 +2066,40 @@
 
             <div class="filter-row" id="filterRow"></div>
 
+            <div class="month-nav" id="monthNav">
+              <span class="month-nav-btn" id="prevMonthBtn" role="button" aria-label="חודש קודם">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </span>
+              <span class="month-nav-label" id="monthNavLabel"></span>
+              <span class="month-nav-btn" id="nextMonthBtn" role="button" aria-label="חודש הבא">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 6l-6 6 6 6" />
+                </svg>
+              </span>
+            </div>
+
             <div class="range-picker" id="rangePicker">
               <input type="date" id="rangeFrom">
               <span>—</span>
               <input type="date" id="rangeTo">
               <button class="btn primary" id="applyRangeBtn">החל</button>
+            </div>
+
+            <div class="chart-card" id="salaryCard">
+              <div class="salary-hint" id="salaryHint">💵 הוסף משכורת כדי לחלק אותה לבזבוזים, השקעות וחיסכון</div>
+              <div id="salaryBody">
+                <div class="salary-head" id="salaryHead">
+                  <div class="chart-title" id="salaryTitle">משכורת</div>
+                  <div class="salary-amt" id="salaryAmt"></div>
+                </div>
+                <div class="stack-bar" id="salaryBar"></div>
+                <div class="legend" id="salaryLegend"></div>
+                <div class="insight" id="salaryNote" style="display:none;"></div>
+              </div>
             </div>
 
             <div class="chart-card" id="chartCard">
@@ -2029,7 +2191,35 @@
       { key: 'month', label: 'החודש' },
       { key: 'range', label: 'טווח מותאם' },
     ];
-    let activeFilter = 'all';
+    // opens on the current month, so on the 1st the screen starts fresh —
+    // nothing is deleted, older months stay reachable through the month arrows
+    let activeFilter = 'month';
+    const monthOf = d => ({ y: d.getFullYear(), m: d.getMonth() });
+    let viewMonth = monthOf(new Date());
+    let lastSeenMonth = monthOf(new Date());
+    const monthStart = (y, m) => new Date(y, m, 1).getTime();
+    const sameMonth = (a, b) => a.y === b.y && a.m === b.m;
+    const isCurrentMonth = () => sameMonth(viewMonth, monthOf(new Date()));
+    const monthName = ({ y, m }) => new Date(y, m, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+    // budget, comparison and category-budget tags follow the month on screen;
+    // under any other filter they stay on the current month
+    const budgetMonth = () => activeFilter === 'month' ? viewMonth : monthOf(new Date());
+    const monthKey = ({ y, m }) => `${y}-${String(m + 1).padStart(2, '0')}`;
+    // 'yyyy-mm' sorts as text in calendar order, so the latest key not after
+    // this month is the salary in effect for it
+    function salaryFor(month) {
+      const key = monthKey(month);
+      const inEffect = Object.keys(salaries).filter(k => k <= key).sort().pop();
+      return inEffect ? salaries[inEffect] : 0;
+    }
+    function salaryBudget() {
+      const spend = salaryBuckets.find(b => b.spend);
+      return spend ? salaryFor(budgetMonth()) * spend.pct / 100 : 0;
+    }
+    const effectiveBudget = () => salaryBudget() || parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+    const periodLabel = () => activeFilter === 'month' && !isCurrentMonth()
+      ? monthName(viewMonth)
+      : FILTERS.find(f => f.key === activeFilter).label;
     let customRange = null; // { from:'yyyy-mm-dd', to:'yyyy-mm-dd' }
     let highlightedCat = null;
     const budgetColor = ratio => ratio < 0.8 ? 'var(--status-good)' : ratio <= 1 ? 'var(--status-warning)' : 'var(--status-critical)';
@@ -2043,6 +2233,18 @@
     let recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses') || '[]');
     let categoryBudgets = JSON.parse(localStorage.getItem('categoryBudgets') || '{}');
     let pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]');
+    // salary per month, keyed 'yyyy-mm'. A month with no entry of its own
+    // inherits the latest earlier one, so a steady salary is entered once.
+    let salaries = JSON.parse(localStorage.getItem('salaries') || '{}');
+    // how the salary is split. The `spend` bucket is the one tied to
+    // expenses — its share becomes the monthly budget — so it can be renamed
+    // but never removed.
+    const DEFAULT_BUCKETS = [
+      { id: 'spend', name: 'בזבוזים', emoji: '🛍️', pct: 60, spend: true },
+      { id: 'invest', name: 'השקעות', emoji: '📈', pct: 20 },
+      { id: 'save', name: 'חיסכון', emoji: '🏦', pct: 20 },
+    ];
+    let salaryBuckets = JSON.parse(localStorage.getItem('salaryBuckets') || 'null') || DEFAULT_BUCKETS;
     let recurCatSelectInst = null;
     let recurDaySelectInst = null;
 
@@ -2065,7 +2267,7 @@
     // low-usage sites). On load, if a tracked key is missing from localStorage
     // but present in IndexedDB, it's restored automatically.
     const IDB_NAME = 'apayTrackerDB', IDB_STORE = 'kv';
-    const MIRRORED_KEYS = ['expenses', 'customCategories', 'monthlyBudget', 'categoryBudgets', 'recurringExpenses', 'lastUsedCategoryKey', 'sheetUrl', 'syncToken'];
+    const MIRRORED_KEYS = ['expenses', 'customCategories', 'monthlyBudget', 'categoryBudgets', 'recurringExpenses', 'lastUsedCategoryKey', 'sheetUrl', 'syncToken', 'salaries', 'salaryBuckets'];
     function idbOpen() {
       return new Promise((resolve, reject) => {
         if (!('indexedDB' in window)) return reject(new Error('no indexedDB'));
@@ -2122,6 +2324,9 @@
       categoryBudgets = JSON.parse(localStorage.getItem('categoryBudgets') || '{}');
       recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses') || '[]');
       lastUsedCategoryKey = localStorage.getItem('lastUsedCategoryKey') || null;
+      salaries = JSON.parse(localStorage.getItem('salaries') || '{}');
+      salaryBuckets = JSON.parse(localStorage.getItem('salaryBuckets') || 'null') || DEFAULT_BUCKETS;
+      renderBucketList();
       buildCatGrid();
       applyDueRecurring();
       renderHistory();
@@ -2207,17 +2412,24 @@
     // category's own budget instead of the overall monthly one.
     let budgetCategoryKey = null;
     function openBudgetEntry(categoryKey) {
-      sheetMode = 'budget';
       budgetCategoryKey = categoryKey || null;
-      editingId = null;
-      state.category = null;
       const current = budgetCategoryKey
         ? (categoryBudgets[budgetCategoryKey] || 0)
         : (parseFloat(localStorage.getItem('monthlyBudget')) || 0);
-      state.amount = String(current);
-      $('selectedCatLabel').textContent = budgetCategoryKey
+      openAmountEntry('budget', budgetCategoryKey
         ? `תקציב לקטגוריית ${budgetCategoryKey}`
-        : 'תקציב חודשי לבזבוזים';
+        : 'תקציב חודשי לבזבוזים', current);
+    }
+    function openSalaryEntry() {
+      const month = budgetMonth();
+      openAmountEntry('salary', `משכורת · ${monthName(month)}`, salaryFor(month));
+    }
+    function openAmountEntry(mode, label, current) {
+      sheetMode = mode;
+      editingId = null;
+      state.category = null;
+      state.amount = String(current);
+      $('selectedCatLabel').textContent = label;
       $('amountVal').textContent = state.amount;
       $('deleteExpense').style.display = 'none';
       $('addNoteToggle').style.display = 'none';
@@ -2228,8 +2440,14 @@
       $('catSheet').classList.add('show');
       $('sheetScrim').classList.add('show');
     }
-    $('budgetValueBtn').onclick = () => openBudgetEntry();
+    // while a salary sets the budget, a manually typed one would just be ignored
+    $('budgetValueBtn').onclick = () => salaryBudget() > 0
+      ? showToast('התקציב נקבע לפי המשכורת — שנה את אחוז הבזבוזים בחלוקה')
+      : openBudgetEntry();
     $('budgetHint').onclick = () => openBudgetEntry();
+    $('salaryValueBtn').onclick = openSalaryEntry;
+    $('salaryHint').onclick = openSalaryEntry;
+    $('salaryHead').onclick = openSalaryEntry;
 
     function renderCategoryBudgetList() {
       const wrap = $('catBudgetList');
@@ -2292,7 +2510,7 @@
 
     $('confirmAmount').onclick = async () => {
       try {
-        if (sheetMode === 'budget') {
+        if (sheetMode === 'budget' || sheetMode === 'salary') {
           const val = parseFloat(state.amount);
           if (!(val >= 0)) {
             const disp = $('amountVal').parentElement;
@@ -2300,7 +2518,14 @@
             setTimeout(() => disp.classList.remove('invalid'), 500);
             return;
           }
-          if (budgetCategoryKey) {
+          if (sheetMode === 'salary') {
+            // 0 is stored too, not deleted — it's how a month says "no salary"
+            // instead of silently inheriting the previous month's
+            salaries[monthKey(budgetMonth())] = val;
+            saveKey('salaries', JSON.stringify(salaries));
+            refreshBudgetDisplay();
+            renderHistory();
+          } else if (budgetCategoryKey) {
             if (val > 0) categoryBudgets[budgetCategoryKey] = val;
             else delete categoryBudgets[budgetCategoryKey];
             saveKey('categoryBudgets', JSON.stringify(categoryBudgets));
@@ -2390,16 +2615,18 @@
         const from = new Date(customRange.from + 'T00:00:00').getTime();
         const to = new Date(customRange.to + 'T23:59:59.999').getTime();
         items = items.filter(e => (e.ts || 0) >= from && (e.ts || 0) <= to);
+      } else if (activeFilter === 'month') {
+        const from = monthStart(viewMonth.y, viewMonth.m);
+        const to = monthStart(viewMonth.y, viewMonth.m + 1);
+        items = items.filter(e => (e.ts || Date.now()) >= from && (e.ts || Date.now()) < to);
       } else if (activeFilter !== 'all' && activeFilter !== 'range') {
         const now = new Date();
         let from;
         if (activeFilter === 'today') {
           from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        } else if (activeFilter === 'week') {
+        } else { // week
           const day = (now.getDay() + 6) % 7; // week starts Monday
           from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day).getTime();
-        } else { // month
-          from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
         }
         items = items.filter(e => (e.ts || Date.now()) >= from);
       }
@@ -2433,12 +2660,46 @@
             return;
           }
           activeFilter = f.key;
+          if (f.key === 'month') viewMonth = monthOf(new Date());
           $('rangePicker').classList.remove('show');
           renderHistory();
         };
         row.appendChild(chip);
       });
     }
+
+    function renderMonthNav() {
+      const nav = $('monthNav');
+      nav.classList.toggle('show', activeFilter === 'month');
+      if (activeFilter !== 'month') return;
+      $('monthNavLabel').textContent = monthName(viewMonth);
+      $('nextMonthBtn').classList.toggle('disabled', isCurrentMonth());
+      // no point stepping back past the month of the very first expense
+      const oldest = expenses.length ? Math.min(...expenses.map(e => e.ts || Date.now())) : Date.now();
+      $('prevMonthBtn').classList.toggle('disabled', monthStart(viewMonth.y, viewMonth.m) <= oldest);
+    }
+    const stepMonth = delta => {
+      const d = new Date(viewMonth.y, viewMonth.m + delta, 1);
+      viewMonth = monthOf(d);
+      renderHistory();
+    };
+    $('prevMonthBtn').onclick = () => stepMonth(-1);
+    $('nextMonthBtn').onclick = () => { if (!isCurrentMonth()) stepMonth(1); };
+    $('monthNavLabel').onclick = () => { viewMonth = monthOf(new Date()); renderHistory(); };
+
+    // an installed PWA can sit in the background across the 1st and come back
+    // still showing last month — on return, roll over to the new month (only if
+    // the user was on the current one, not browsing an older month on purpose)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      const now = monthOf(new Date());
+      if (!sameMonth(now, lastSeenMonth)) {
+        if (sameMonth(viewMonth, lastSeenMonth)) viewMonth = now;
+        lastSeenMonth = now;
+        applyDueRecurring();
+        renderHistory();
+      }
+    });
     $('applyRangeBtn').onclick = () => {
       const from = $('rangeFrom').value;
       const to = $('rangeTo').value;
@@ -2491,11 +2752,13 @@
 
       const total = items.reduce((s, e) => s + e.amount, 0);
       animateTotal(total);
-      $('totalLabel').textContent = 'סה"כ · ' + FILTERS.find(f => f.key === activeFilter).label;
+      $('totalLabel').textContent = 'סה"כ · ' + periodLabel();
 
+      renderMonthNav();
       renderChart(items, total);
       renderInsight(items);
       renderBudget();
+      renderSalary();
       renderComparison();
       renderRepeatChip();
     }
@@ -2511,7 +2774,11 @@
       if (!top) { el.style.display = 'none'; return; }
       const [catKey, amt] = top;
       const oldestTs = Math.min(...items.map(e => e.ts || Date.now()));
-      const weeks = Math.max(1, (Date.now() - oldestTs) / (7 * 86400000));
+      // a past month ends at its last day, not today — otherwise its weekly
+      // average keeps shrinking the further back it is
+      const endTs = activeFilter === 'month' && !isCurrentMonth()
+        ? monthStart(viewMonth.y, viewMonth.m + 1) : Date.now();
+      const weeks = Math.max(1, (endTs - oldestTs) / (7 * 86400000));
       const perWeek = amt / weeks;
       el.style.display = 'block';
       el.innerHTML = `💡 בממוצע אתה מוציא ${money(perWeek)} על ${escapeHtml(catKey)} בשבוע`;
@@ -2547,41 +2814,36 @@
       requestAnimationFrame(step);
     }
 
-    function monthSpent() {
-      const now = new Date();
-      const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    // total for a calendar month (month index may over/underflow — Date normalizes it)
+    function spentInMonth(y, m, categoryKey) {
+      const from = monthStart(y, m);
+      const to = monthStart(y, m + 1);
       return expenses
-        .filter(e => (e.ts || Date.now()) >= from)
+        .filter(e => (!categoryKey || e.category === categoryKey) && (e.ts || Date.now()) >= from && (e.ts || Date.now()) < to)
         .reduce((s, e) => s + e.amount, 0);
+    }
+
+    function monthSpent() {
+      const { y, m } = budgetMonth();
+      return spentInMonth(y, m);
     }
 
     function categoryMonthSpent(key) {
-      const now = new Date();
-      const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      return expenses
-        .filter(e => e.category === key && (e.ts || 0) >= from)
-        .reduce((s, e) => s + e.amount, 0);
-    }
-
-    function lastMonthSpent() {
-      const now = new Date();
-      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-      const to = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      return expenses
-        .filter(e => (e.ts || 0) >= from && (e.ts || 0) < to)
-        .reduce((s, e) => s + e.amount, 0);
+      const { y, m } = budgetMonth();
+      return spentInMonth(y, m, key);
     }
 
     function renderComparison() {
       const el = $('monthCompare');
-      const thisM = monthSpent();
-      const lastM = lastMonthSpent();
+      const { y, m } = budgetMonth();
+      const thisM = spentInMonth(y, m);
+      const lastM = spentInMonth(y, m - 1);
       if (lastM <= 0) { el.style.display = 'none'; return; }
       const diffPct = ((thisM - lastM) / lastM) * 100;
       const up = diffPct >= 0;
       el.style.display = 'flex';
       el.style.color = up ? 'var(--status-critical)' : 'var(--status-good)';
-      el.innerHTML = `<span>${up ? '📈' : '📉'}</span><span>${up ? '+' : ''}${diffPct.toFixed(0)}% לעומת החודש שעבר</span>`;
+      el.innerHTML = `<span>${up ? '📈' : '📉'}</span><span>${up ? '+' : ''}${diffPct.toFixed(0)}% לעומת החודש הקודם</span>`;
     }
 
     // one-tap re-add of the most recent expense — the common case of buying
@@ -2615,8 +2877,56 @@
       syncToSheet({ category: entry.category, amount: entry.amount, note: entry.note, ...(token ? { token } : {}) });
     }
 
+    function renderSalary() {
+      const month = budgetMonth();
+      const salary = salaryFor(month);
+      $('salaryHint').style.display = salary > 0 ? 'none' : 'block';
+      $('salaryBody').style.display = salary > 0 ? 'block' : 'none';
+      if (!(salary > 0)) return;
+
+      $('salaryTitle').textContent = `משכורת · ${monthName(month)}`;
+      $('salaryAmt').innerHTML = money(salary);
+
+      const bar = $('salaryBar');
+      const legend = $('salaryLegend');
+      bar.innerHTML = '';
+      legend.innerHTML = '';
+      const parts = salaryBuckets.map((b, i) => ({ ...b, color: `var(--series-${(i % 6) + 1})` }));
+      const totalPct = parts.reduce((s, b) => s + b.pct, 0);
+      if (totalPct < 100) parts.push({ name: 'לא מחולק', emoji: '⋯', pct: 100 - totalPct, color: 'var(--sur-hi)' });
+
+      parts.forEach(b => {
+        const amount = salary * b.pct / 100;
+        if (b.pct > 0) {
+          const seg = document.createElement('div');
+          seg.className = 'stack-seg';
+          seg.style.width = (b.pct / Math.max(100, totalPct) * 100) + '%';
+          seg.style.background = b.color;
+          bar.appendChild(seg);
+        }
+        let tag = '';
+        if (b.spend && amount > 0) {
+          const ratio = monthSpent() / amount;
+          tag = `<span class="legend-budget-tag" style="color:${budgetColor(ratio)}">· נוצלו ${Math.round(ratio * 100)}%</span>`;
+        }
+        const row = document.createElement('div');
+        row.className = 'legend-row';
+        row.innerHTML = `
+        <div class="legend-swatch" style="background:${b.color}"></div>
+        <div class="legend-name">${escapeHtml(b.emoji)} ${escapeHtml(b.name || 'יעד')} ${tag}</div>
+        <div class="legend-pct">${Number(b.pct.toFixed(1))}%</div>
+        <div class="legend-amt">₪${fmtMoney(amount)}</div>`;
+        row.onclick = () => { openSettings(); $('scrollArea').scrollTop = 0; };
+        legend.appendChild(row);
+      });
+
+      const note = $('salaryNote');
+      note.style.display = totalPct > 100 ? 'block' : 'none';
+      if (totalPct > 100) note.textContent = `⚠️ החלוקה מגיעה ל-${Number(totalPct.toFixed(1))}% — יותר מכל המשכורת`;
+    }
+
     function renderBudget() {
-      const budget = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+      const budget = effectiveBudget();
       const hint = $('budgetHint');
       const card = $('budgetCard');
 
@@ -2721,11 +3031,17 @@
 
     // settings
     function refreshBudgetDisplay() {
-      const b = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
-      $('budgetValueBtn').textContent = b > 0 ? ('₪' + fmtMoney(b)) : 'הגדר תקציב';
+      const fromSalary = salaryBudget();
+      const b = effectiveBudget();
+      $('budgetValueBtn').textContent = b > 0 ? ('₪' + fmtMoney(b) + (fromSalary > 0 ? ' · לפי המשכורת' : '')) : 'הגדר תקציב';
+      const salary = salaryFor(budgetMonth());
+      $('salaryValueBtn').textContent = salary > 0
+        ? `₪${fmtMoney(salary)} · ${monthName(budgetMonth())}`
+        : 'הגדר משכורת';
     }
     function openSettings() {
       $('settingsPanel').classList.add('show');
+      renderBucketList();
       syncSettingsChrome();
       $('sheetUrlInput').value = localStorage.getItem('sheetUrl') || '';
       $('syncTokenInput').value = localStorage.getItem('syncToken') || '';
@@ -2848,6 +3164,62 @@
       });
     }
     renderCustomCatList();
+
+    // ---------- salary buckets ----------
+    function saveBuckets() {
+      saveKey('salaryBuckets', JSON.stringify(salaryBuckets));
+      refreshBudgetDisplay();
+      renderHistory();
+    }
+    function renderBucketSum() {
+      const total = salaryBuckets.reduce((s, b) => s + b.pct, 0);
+      const el = $('bucketSumNote');
+      el.style.display = Math.abs(total - 100) < 0.01 ? 'none' : 'block';
+      el.textContent = total < 100
+        ? `חולקו ${Number(total.toFixed(1))}% — נשארו ${Number((100 - total).toFixed(1))}% לא מחולקים`
+        : `החלוקה מגיעה ל-${Number(total.toFixed(1))}% — יותר מכל המשכורת`;
+    }
+    function renderBucketList() {
+      const wrap = $('bucketList');
+      wrap.innerHTML = '';
+      salaryBuckets.forEach((b, i) => {
+        const row = document.createElement('div');
+        row.className = 'bucket-row';
+        row.innerHTML = `
+        <input class="b-emoji" maxlength="4" aria-label="אימוג'י">
+        <input class="b-name" placeholder="שם היעד" aria-label="שם היעד">
+        <input class="b-pct" inputmode="decimal" aria-label="אחוז מהמשכורת">
+        <span class="pct-sign">%</span>
+        ${b.spend ? '<span class="remove-spacer"></span>' : '<span class="remove" role="button" aria-label="מחק יעד">✕</span>'}`;
+        const [emojiIn, nameIn, pctIn] = row.querySelectorAll('input');
+        emojiIn.value = b.emoji;
+        nameIn.value = b.name;
+        pctIn.value = b.pct;
+        // saved on blur, not per keystroke — a full re-render would steal focus
+        emojiIn.onchange = () => { b.emoji = emojiIn.value.trim() || '🎯'; saveBuckets(); };
+        nameIn.onchange = () => { b.name = nameIn.value.trim() || 'יעד'; nameIn.value = b.name; saveBuckets(); };
+        pctIn.oninput = () => {
+          b.pct = Math.min(100, Math.max(0, parseFloat(pctIn.value) || 0));
+          renderBucketSum();
+        };
+        pctIn.onchange = () => { pctIn.value = b.pct; saveBuckets(); };
+        const remove = row.querySelector('.remove');
+        if (remove) remove.onclick = () => {
+          salaryBuckets.splice(i, 1);
+          saveBuckets();
+          renderBucketList();
+        };
+        wrap.appendChild(row);
+      });
+      renderBucketSum();
+    }
+
+    $('addBucketBtn').onclick = () => {
+      salaryBuckets.push({ id: Date.now(), name: '', emoji: '🎯', pct: 0 });
+      saveBuckets();
+      renderBucketList();
+      $('bucketList').lastElementChild.querySelector('.b-name').focus();
+    };
 
     $('addCatBtn').onclick = () => {
       const name = $('newCatName').value.trim();
@@ -3045,7 +3417,7 @@
       ).join('');
       $('printReport').innerHTML = `
       <h1>דוח הוצאות</h1>
-      <div class="print-meta">${FILTERS.find(f => f.key === activeFilter).label} · הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
+      <div class="print-meta">${escapeHtml(periodLabel())} · הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
       <div class="print-total">סה"כ: ${money(total)}</div>
       <h2>לפי קטגוריה</h2>
       <table>${catRows}</table>
