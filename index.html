@@ -8,14 +8,13 @@
   <title>הוצאות</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1f5a43">
+  <meta name="theme-color" content="#f4f6f3">
   <link rel="icon" href="icon-192.png" type="image/png">
 
   <!-- iOS "Add to Home Screen" support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- full screen: the page draws under the status bar. iOS then forces the
-     clock/battery to white, so the top of the app is the deep green "cover"
-     band (.status-bar + .history-header) that keeps them readable -->
+  <!-- full screen: the page draws under the status bar and scrolls beneath
+     the clock, like a native app (see .status-bar) -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="הוצאות">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -190,13 +189,20 @@
       z-index: 50;
     }
 
-    /* stays pinned while the page scrolls under it, so the white system
-     clock always sits on green */
+    /* not a band of its own: an overlay exactly as tall as the clock area.
+     The page scrolls up underneath it and shows through a light frost, so
+     the clock stays readable over whatever passes below. */
     .status-bar {
-      padding: 16px 28px 4px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 36px;
       z-index: 20;
-      position: relative;
-      background: var(--accent);
+      pointer-events: none;
+      background: color-mix(in srgb, var(--sur-1) 72%, transparent);
+      backdrop-filter: blur(14px) saturate(160%);
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
     }
 
     /* the whole page (header, budget, chart, list — everything) scrolls together
@@ -587,12 +593,10 @@
      900-weight title between two outlined circles — the circles read as
      web buttons, and a centred heavy title with no nav context reads as a
      banner. Neither is what an app looks like. */
-    /* the green "cover" continues from the status bar through the title */
+    /* the top padding clears the clock area, since the page now starts at
+     the very top edge of the screen */
     .history-header {
-      padding: 6px var(--gut) 18px;
-      margin-bottom: 20px;
-      background: var(--accent);
-      color: var(--on-accent);
+      padding: 40px var(--gut) 12px;
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -613,13 +617,13 @@
       margin: 0;
       font-weight: 900;
       line-height: 1.15;
-      color: var(--on-accent);
+      color: var(--text);
     }
 
     /* no chrome — the glyph IS the button. 44px stays for the tap target. */
     .header-btn {
       cursor: pointer;
-      color: var(--on-accent);
+      color: var(--accent);
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -1795,7 +1799,11 @@
       }
 
       .status-bar {
-        padding-top: calc(env(safe-area-inset-top) + 10px);
+        height: env(safe-area-inset-top);
+      }
+
+      .history-header {
+        padding-top: calc(env(safe-area-inset-top) + 6px);
       }
 
       /* clearance for the FAB belongs OUTSIDE the card — as padding it left
