@@ -8,89 +8,74 @@
   <title>הוצאות</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a84ff">
+  <meta name="theme-color" content="#f4f6f3">
   <link rel="icon" href="icon-192.png" type="image/png">
 
   <!-- iOS "Add to Home Screen" support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- light UI: "default" gives dark status-bar text; black-translucent would
+     force white text, unreadable over the pale ledger background -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="הוצאות">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <!-- Rubik: a clean, professional Google Font with full Hebrew + Latin coverage.
-     Falls back to the system font automatically if offline on first load. -->
+  <!-- "ledger" look: Frank Ruhl Libre (a Hebrew serif) for headings and money,
+     Assistant for everything else. Both fall back to system fonts offline. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap"
+  <link
+    href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&family=Frank+Ruhl+Libre:wght@500;700;900&display=swap"
     rel="stylesheet">
   <style>
+    /* "ledger" theme: a pale, slightly green paper ground, ink-green text and
+     one deep green accent. Structure comes from hairlines and type rather than
+     card fills — a private-bank passbook rather than a widget kit. */
     :root {
-      --bg-outer: #1c1c1e;
       --phone-bezel: #0a0a0a;
-      --screen-bg: #000;
-      --card: #1c1c1e;
-      --card2: #2c2c2e;
-      --accent: #0a84ff;
-      --green: #30d158;
-      --red: #ff453a;
-      --text: #ffffff;
-      --text-dim: #8e8e93;
-      --chart-surface: #1a1a19;
-      --chart-muted: #898781;
-      --chart-gridline: #2c2c2a;
-      /* validated categorical palette, dark steps, fixed order — references/palette.md */
-      --series-1: #3987e5;
-      /* blue    */
-      --series-2: #d95926;
-      /* orange  */
-      --series-3: #199e70;
-      /* aqua    */
-      --series-4: #c98500;
-      /* yellow  */
-      --series-5: #d55181;
-      /* magenta */
-      --series-6: #008300;
-      /* green   */
-      /* status palette (fixed, reserved — references/palette.md) */
-      --status-good: #0ca30c;
-      --status-warning: #fab219;
-      --status-critical: #d03b3b;
+      --accent: #1f5a43;
+      --on-accent: #f4f6f3;
+      --green: #1f7a52;
+      --red: #b23a2e;
+      --text: #1b2a23;
+      --text-dim: #6b7a72;
+      /* categorical palette, muted to sit on paper; fixed order */
+      --series-1: #1f5a43;
+      /* forest  */
+      --series-2: #b5651d;
+      /* copper  */
+      --series-3: #3d6e8f;
+      /* slate   */
+      --series-4: #b38a2e;
+      /* ochre   */
+      --series-5: #8a4f6b;
+      /* plum    */
+      --series-6: #6f8a5a;
+      /* olive   */
+      /* status palette (reserved for budget state) */
+      --status-good: #1f7a52;
+      --status-warning: #b7791f;
+      --status-critical: #b23a2e;
 
-      /* iOS system material + motion tokens (from Apple's Human Interface
-       Guidelines) — solid surfaces and a single blue accent replace the
-       previous decorative neon-glass gradients/glow. */
-      --sep: rgba(84, 84, 88, .65);
-      --glass-bg: var(--card);
-      --glass-bg-strong: var(--card2);
-      --glass-border: var(--sep);
-      /* the exact curves recommended for this class of UI: a strong ease-out
-       for anything entering/giving feedback, and the real iOS drawer curve
-       (Ionic) for the bottom sheet specifically */
-      --ease: cubic-bezier(.23, 1, .32, 1);
+      /* a gentle ease-out for anything entering, and the iOS drawer curve
+       for the bottom sheet */
+      --ease: cubic-bezier(.2, .7, .2, 1);
       --ease-drawer: cubic-bezier(.32, .72, 0, 1);
 
-      /* ---- design system ----------------------------------------------
-       Three things were making this read as "a web page with rounded
-       divs" rather than an app: every surface was the same grey at the
-       same radius with the same 1px border, every gap was the same size,
-       and text had no scale. These tokens fix all three at the source. */
+      --f-display: 'Frank Ruhl Libre', 'David', Georgia, serif;
+      --f-body: 'Assistant', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 
-      /* one elevation ladder — surfaces differ by fill, never by border */
-      --sur-1: #121214;
-      /* page ground, just off pure black            */
-      --sur-2: #1b1b1e;
-      /* grouped card                                */
-      --sur-3: #262629;
-      /* control inside a card (input, chip, thumb)   */
-      --sur-hi: #3a3a3e;
-      /* pressed / selected                          */
+      /* surfaces: page, raised sheet, control fill, pressed */
+      --sur-1: #f4f6f3;
+      --sur-2: #fbfcfa;
+      --sur-3: #e8ede8;
+      --sur-hi: #dbe3db;
 
-      /* text ramp: primary → secondary → tertiary, real contrast steps */
-      --text-2: #a2a2a8;
-      --text-3: #6d6d73;
+      /* text ramp: primary → secondary → tertiary */
+      --text-2: #4c5c54;
+      --text-3: #7d8b83;
 
-      /* hairline that reads as a separator, not an outline */
-      --hair: rgba(255, 255, 255, .08);
+      /* the hairline that does the work cards used to do */
+      --hair: #dde4dd;
 
       /* radius ladder — nested corners must shrink inward, not repeat */
       --r-xs: 8px;
@@ -102,8 +87,8 @@
       /* one horizontal gutter for the whole app; nothing sets its own */
       --gut: 18px;
 
-      --shadow-card: 0 1px 2px rgba(0, 0, 0, .4);
-      --shadow-pop: 0 8px 24px rgba(0, 0, 0, .5);
+      --shadow-card: none;
+      --shadow-pop: 0 12px 32px rgba(27, 42, 35, .14);
     }
 
     /* money must line up in a column — proportional digits are the single
@@ -146,8 +131,8 @@
     body {
       margin: 0;
       min-height: 100%;
-      background: #000;
-      font-family: 'Rubik', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Arial, sans-serif;
+      background: var(--sur-1);
+      font-family: var(--f-body);
       color: var(--text);
       display: flex;
       align-items: center;
@@ -176,7 +161,7 @@
       background: var(--phone-bezel);
       border-radius: 55px;
       padding: 14px;
-      box-shadow: 0 30px 60px rgba(0, 0, 0, .6), inset 0 0 0 2px #3a3a3c;
+      box-shadow: 0 30px 60px rgba(27, 42, 35, .28), inset 0 0 0 2px #3a3a3c;
       position: relative;
       transform-origin: top center;
     }
@@ -184,12 +169,7 @@
     .screen {
       width: 100%;
       height: 100%;
-      /* ONE light source, not two. Two overlapping blooms in different hues
-       read as decoration; a single soft wash behind the hero card reads as
-       depth. It also stops competing with the card's own gradient. */
-      background:
-        radial-gradient(130% 30% at 50% -4%, rgba(80, 72, 130, .22), transparent 70%),
-        var(--sur-1);
+      background: var(--sur-1);
       border-radius: 42px;
       overflow: hidden;
       position: relative;
@@ -237,7 +217,7 @@
     .sheet-scrim {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, .5);
+      background: rgba(27, 42, 35, .28);
       opacity: 0;
       pointer-events: none;
       transition: opacity .3s var(--ease);
@@ -255,16 +235,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(30, 30, 33, .93);
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
-      /* a sheet's corners should be noticeably rounder than the cards behind
-       it — that size difference is most of what sells it as a layer on top */
-      border-radius: 26px 26px 0 0;
-      box-shadow: 0 -1px 0 rgba(255, 255, 255, .09), 0 -20px 50px rgba(0, 0, 0, .6);
+      background: var(--sur-2);
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -1px 0 var(--hair), 0 -16px 40px rgba(27, 42, 35, .12);
       padding: 14px 18px 28px;
       transform: translateY(100%);
-      transition: transform .38s var(--ease-drawer);
+      transition: transform .45s var(--ease-drawer);
       z-index: 60;
       max-height: 88%;
       display: flex;
@@ -309,9 +285,9 @@
 
     .sheet h2 {
       margin: 0 0 3px;
-      font-size: 21px;
+      font-family: var(--f-display);
+      font-size: 23px;
       font-weight: 700;
-      letter-spacing: -.3px;
     }
 
     .sheet .sub {
@@ -326,10 +302,13 @@
       gap: 10px;
     }
 
+    /* outlined in a hairline, not filled — the ledger keeps fills for
+     pressed/selected states only */
     .cat-btn {
-      background: var(--sur-3);
+      background: transparent;
       border: 0;
-      border-radius: 16px;
+      box-shadow: inset 0 0 0 1px var(--hair);
+      border-radius: 12px;
       padding: 14px 6px;
       display: flex;
       flex-direction: column;
@@ -432,11 +411,12 @@
      size and everything else steps back a weight */
     .amount-display {
       text-align: center;
+      font-family: var(--f-display);
       font-size: 56px;
       font-weight: 700;
       margin: 20px 0 10px;
       direction: ltr;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.02em;
       line-height: 1;
     }
 
@@ -490,9 +470,9 @@
      filled one reads as a keypad. Digits get the numeric face so 1 and 7
      don't jump around between presses. */
     .key {
-      background: var(--sur-3);
+      background: transparent;
       border: 0;
-      border-radius: 14px;
+      border-radius: 10px;
       padding: 15px 0;
       font-size: 23px;
       font-weight: 500;
@@ -532,7 +512,7 @@
 
     .btn.primary {
       background: var(--accent);
-      color: #fff;
+      color: var(--on-accent);
     }
 
     .btn.primary:active {
@@ -554,13 +534,13 @@
       width: 100%;
       margin-top: 10px;
       flex: none;
-      background: rgba(255, 69, 58, .12);
+      background: transparent;
       color: var(--red);
-      border: 1px solid rgba(255, 69, 58, .35);
+      border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
     }
 
     .btn.danger:active {
-      background: rgba(255, 69, 58, .2);
+      background: color-mix(in srgb, var(--red) 10%, transparent);
     }
 
     /* ---------- Toast ---------- */
@@ -569,16 +549,16 @@
       bottom: 40px;
       left: 20px;
       right: 20px;
-      background: var(--green);
-      color: #04240f;
+      background: var(--text);
+      color: var(--sur-1);
       padding: 12px 16px;
-      border-radius: 14px;
+      border-radius: 12px;
       font-size: 14px;
       font-weight: 600;
       text-align: center;
       opacity: 0;
       transform: translateY(10px);
-      transition: all .3s;
+      transition: opacity .3s var(--ease), transform .4s var(--ease);
       z-index: 80;
       pointer-events: none;
     }
@@ -589,6 +569,7 @@
     }
 
     .toast-action {
+      color: #a9d8c2;
       text-decoration: underline;
       font-weight: 800;
       margin-inline-start: 10px;
@@ -619,10 +600,10 @@
 
     .history-header h1 {
       text-align: start;
-      font-size: 32px;
+      font-family: var(--f-display);
+      font-size: 34px;
       margin: 0;
-      font-weight: 800;
-      letter-spacing: -.6px;
+      font-weight: 900;
       line-height: 1.15;
       color: var(--text);
     }
@@ -718,16 +699,13 @@
       outline: none;
     }
 
-    /* period filter — a true segmented control: one recessed track with a
-     single raised thumb. Before, the "active" chip was a slightly lighter
-     grey on grey, which read as a hover state rather than a selection. */
+    /* period filter as ledger tabs: plain labels over a hairline, the active
+     one marked by an accent underline instead of a raised thumb */
     .filter-row {
       display: flex;
       gap: 0;
       margin: 0 var(--gut) 20px;
-      padding: 2px;
-      background: rgba(118, 118, 128, .18);
-      border-radius: 9px;
+      border-bottom: 1px solid var(--hair);
       overflow-x: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -742,31 +720,16 @@
     .filter-chip {
       position: relative;
       flex: 1 0 auto;
-      padding: 6px 12px;
-      border-radius: 7px;
+      padding: 8px 10px;
+      margin-bottom: -1px;
+      border-bottom: 2px solid transparent;
       text-align: center;
-      color: var(--text);
-      font-size: 12.5px;
-      font-weight: 500;
+      color: var(--text-3);
+      font-size: 13.5px;
+      font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
-      transition: background .22s var(--ease), color .22s var(--ease), font-weight .2s;
-    }
-
-    /* hairline divider between unselected segments, hidden next to the thumb */
-    .filter-chip:not(:first-child)::before {
-      content: '';
-      position: absolute;
-      inset-block: 5px;
-      inset-inline-start: 0;
-      width: 1px;
-      background: var(--hair);
-      transition: opacity .2s;
-    }
-
-    .filter-chip.active::before,
-    .filter-chip.active+.filter-chip::before {
-      opacity: 0;
+      transition: color .25s var(--ease), border-color .25s var(--ease);
     }
 
     .filter-chip:active {
@@ -774,10 +737,8 @@
     }
 
     .filter-chip.active {
-      background: var(--sur-hi);
       color: var(--text);
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .07);
+      border-bottom-color: var(--accent);
     }
 
     .range-picker {
@@ -800,7 +761,7 @@
       padding: 8px 10px;
       color: var(--text);
       font-size: 12.5px;
-      color-scheme: dark;
+      color-scheme: light;
     }
 
     .range-picker span {
@@ -831,7 +792,8 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: var(--sur-3);
+      background: transparent;
+      box-shadow: inset 0 0 0 1px var(--hair);
       color: var(--accent);
       display: flex;
       align-items: center;
@@ -841,7 +803,8 @@
     }
 
     .month-nav-btn:active {
-      transform: scale(.9);
+      background: var(--sur-3);
+      transform: scale(.94);
     }
 
     .month-nav-btn.disabled {
@@ -850,26 +813,29 @@
     }
 
     .month-nav-label {
-      font-size: 15px;
-      font-weight: 600;
+      font-family: var(--f-display);
+      font-size: 17px;
+      font-weight: 700;
       cursor: pointer;
     }
 
     /* part-to-whole stacked bar */
+    /* a ledger section, not a floating card: content on the page ground,
+     closed off by a hairline underneath */
     .chart-card {
       margin: 0 var(--gut) 22px;
-      background: var(--sur-2);
+      background: transparent;
       border: 0;
-      border-radius: var(--r-lg);
-      padding: 15px 16px 14px;
-      box-shadow: var(--shadow-card);
+      border-bottom: 1px solid var(--hair);
+      border-radius: 0;
+      padding: 0 0 18px;
     }
 
     .chart-card .chart-title {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 12.5px;
+      font-weight: 700;
       color: var(--text-3);
-      letter-spacing: .02em;
+      letter-spacing: .03em;
       margin-bottom: 12px;
     }
 
@@ -877,9 +843,9 @@
      2px dark borders reads as a progress bar someone broke. */
     .stack-bar {
       display: flex;
-      gap: 2px;
+      gap: 3px;
       width: 100%;
-      height: 10px;
+      height: 8px;
       border-radius: 99px;
       overflow: hidden;
       background: var(--sur-3);
@@ -956,8 +922,9 @@
     }
 
     .legend-amt {
-      font-size: 14px;
-      font-weight: 600;
+      font-family: var(--f-display);
+      font-size: 15px;
+      font-weight: 700;
       color: var(--text);
       direction: ltr;
       flex-shrink: 0;
@@ -980,44 +947,15 @@
       line-height: 1.55;
     }
 
-    /* ---------- Hero card: total + budget ring + comparison, one widget
-     instead of three separate boxes stacked on top of each other ---------- */
+    /* ---------- Hero: total + budget + comparison. The total is set big in
+     the serif and sits straight on the page; a hairline closes the section. */
     .hero-card {
       margin: 0 var(--gut) 22px;
-      padding: 18px 18px 16px;
-      /* darker and less saturated than before. The old card was the only
-       bright object on a black screen, which made it read as a sticker
-       pasted on rather than the top of a hierarchy. */
-      background: linear-gradient(145deg, #2b2f52 0%, #432f4d 58%, #5a2f3e 100%);
-      position: relative;
-      overflow: hidden;
-      border-radius: var(--r-xl);
-      box-shadow: 0 10px 30px -8px rgba(0, 0, 0, .7);
+      padding: 4px 0 18px;
+      border-bottom: 1px solid var(--hair);
       display: flex;
       flex-direction: column;
       gap: 16px;
-    }
-
-    .hero-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(130% 100% at 88% -25%, rgba(255, 255, 255, .14), transparent 62%);
-    }
-
-    /* a hairline top edge is what makes a dark card look lit rather than flat */
-    .hero-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      pointer-events: none;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
-    }
-
-    .hero-card>* {
-      position: relative;
     }
 
     .hero-top {
@@ -1026,21 +964,26 @@
       align-items: flex-start;
     }
 
+    .hero-top svg {
+      stroke: var(--text-3);
+    }
+
     .hero-label {
-      color: rgba(255, 255, 255, .62);
-      font-size: 12px;
+      color: var(--text-3);
+      font-size: 12.5px;
       font-weight: 600;
       letter-spacing: .02em;
     }
 
     .hero-num {
-      font-size: 40px;
-      font-weight: 800;
+      font-family: var(--f-display);
+      font-size: 46px;
+      font-weight: 700;
       direction: ltr;
       display: block;
-      margin-top: 4px;
-      color: #fff;
-      letter-spacing: -0.035em;
+      margin-top: 6px;
+      color: var(--text);
+      letter-spacing: -0.02em;
       line-height: 1;
     }
 
@@ -1051,8 +994,6 @@
       display: none;
       flex-direction: column;
       gap: 8px;
-      padding-top: 15px;
-      border-top: 1px solid rgba(255, 255, 255, .13);
     }
 
     .hero-budget.show {
@@ -1074,7 +1015,7 @@
     .hero-budget-left {
       font-size: 12.5px;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       white-space: nowrap;
     }
 
@@ -1083,9 +1024,9 @@
     .hero-ring {
       position: relative;
       width: 100%;
-      height: 7px;
+      height: 5px;
       border-radius: 99px;
-      background: rgba(255, 255, 255, .18);
+      background: var(--sur-3);
       overflow: hidden;
     }
 
@@ -1096,15 +1037,15 @@
       inset-inline-end: auto;
       width: calc(var(--ratio, 0) * 100%);
       border-radius: 99px;
-      background: var(--ring-color, #fff);
-      transition: width .5s var(--ease), background .35s;
+      background: var(--ring-color, var(--accent));
+      transition: width 1s var(--ease), background .4s;
     }
 
     .hero-budget-nums {
       display: flex;
       justify-content: flex-start;
-      font-size: 11.5px;
-      color: rgba(255, 255, 255, .62);
+      font-size: 12px;
+      color: var(--text-3);
     }
 
     /* A money value is an LTR island. Forcing direction:ltr on a whole line
@@ -1121,10 +1062,9 @@
 
     .hero-hint {
       display: none;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, .13);
-      color: rgba(255, 255, 255, .8);
-      font-size: 12.5px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
     }
 
@@ -1140,12 +1080,10 @@
       font-weight: 700;
     }
 
-    /* ---------- Expense list: one grouped container with hairline dividers,
-     not a floating bordered card per row ---------- */
+    /* ---------- Expense list: rows straight on the page, ruled by hairlines
+     like the lines of a ledger ---------- */
     .list {
       margin: 0 var(--gut) 100px;
-      background: var(--sur-2);
-      border-radius: var(--r-lg);
       overflow: hidden;
     }
 
@@ -1165,21 +1103,31 @@
       gap: 12px;
       cursor: pointer;
       background: transparent;
-      padding: 10px 14px;
+      padding: 11px 2px;
       position: relative;
-      transition: background .12s var(--ease);
+      transition: background .2s var(--ease);
     }
 
-    /* separator inset to the text edge, iOS-style — a full-bleed rule between
-     every row is what makes a grouped list look like a spreadsheet */
     .row:not(:last-child)::after {
       content: '';
       position: absolute;
       bottom: 0;
-      inset-inline-start: 64px;
-      inset-inline-end: 0;
+      inset-inline: 0;
       height: 1px;
       background: var(--hair);
+    }
+
+    /* a just-logged expense eases in from above with a brief green wash */
+    .row.enter {
+      animation: rowIn .6s var(--ease) both;
+    }
+
+    @keyframes rowIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+        background: #dcebe2;
+      }
     }
 
     .row:active {
@@ -1189,10 +1137,13 @@
     .row .emoji {
       flex-shrink: 0;
       width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--sur-3);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
+      font-size: 18px;
       line-height: 1;
     }
 
@@ -1202,9 +1153,8 @@
     }
 
     .row .cat {
-      font-size: 15px;
-      font-weight: 500;
-      letter-spacing: -.01em;
+      font-size: 15.5px;
+      font-weight: 600;
     }
 
     .row .note {
@@ -1223,10 +1173,10 @@
     }
 
     .row .amt {
-      font-size: 16px;
-      font-weight: 600;
+      font-family: var(--f-display);
+      font-size: 16.5px;
+      font-weight: 700;
       direction: ltr;
-      letter-spacing: -.02em;
       flex-shrink: 0;
     }
 
@@ -1259,11 +1209,11 @@
     /* section header: smaller and wider-tracked — the iOS grouped-table
      convention, so it reads as a label rather than as body copy */
     .section-head {
-      margin: 0 calc(var(--gut) + 4px) 7px;
-      font-size: 12px;
-      font-weight: 600;
+      margin: 0 var(--gut) 2px;
+      font-size: 12.5px;
+      font-weight: 700;
       color: var(--text-3);
-      letter-spacing: .02em;
+      letter-spacing: .03em;
     }
 
     .empty {
@@ -1437,13 +1387,11 @@
       z-index: 30;
       max-height: 220px;
       overflow-y: auto;
-      background: rgba(44, 44, 46, .97);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: var(--sur-2);
       border: 1px solid var(--hair);
       border-radius: 14px;
       padding: 6px;
-      box-shadow: 0 14px 34px rgba(0, 0, 0, .55);
+      box-shadow: var(--shadow-pop);
       scrollbar-width: none;
       -ms-overflow-style: none;
       /* origin-aware entrance: scales from the trigger it came from, not from
@@ -1570,7 +1518,8 @@
     }
 
     .salary-amt {
-      font-size: 17px;
+      font-family: var(--f-display);
+      font-size: 19px;
       font-weight: 700;
     }
 
@@ -1603,13 +1552,13 @@
       text-align: right;
     }
 
-    .settings-panel .bucket-row .b-pct {
-      width: 56px;
+    .settings-panel .bucket-row .b-amt {
+      width: 78px;
       flex-shrink: 0;
       text-align: center;
     }
 
-    .bucket-row .pct-sign {
+    .bucket-row .cur-sign {
       color: var(--text-3);
       font-size: 12px;
     }
@@ -1673,11 +1622,12 @@
       top: 2px;
       background: #fff;
       border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(27, 42, 35, .25);
       transition: .2s;
     }
 
     .switch input:checked+.switch-track {
-      background: var(--green);
+      background: var(--accent);
       border-color: transparent;
     }
 
@@ -1688,16 +1638,17 @@
     /* ---------- External controls ---------- */
     .side-panel {
       width: 300px;
-      color: #fff;
+      color: var(--text);
     }
 
     .side-panel h2 {
-      font-size: 18px;
+      font-family: var(--f-display);
+      font-size: 22px;
       margin-bottom: 8px;
     }
 
     .side-panel p {
-      color: #a1a1a6;
+      color: var(--text-2);
       font-size: 13px;
       line-height: 1.6;
     }
@@ -1709,27 +1660,23 @@
       bottom: 28px;
       width: 58px;
       height: 58px;
-      border-radius: 50%;
-      /* a lit sphere rather than a flat disc: a top-down gradient plus a
-       coloured shadow in the button's own hue, which is what separates an
-       iOS-feeling control from a Material circle */
-      background: linear-gradient(180deg, #3f9dff 0%, var(--accent) 55%, #0069d9 100%);
-      color: #fff;
+      /* a rounded square in flat green with a soft shadow of its own hue */
+      border-radius: 18px;
+      background: var(--accent);
+      color: var(--on-accent);
       display: flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
-      box-shadow: 0 8px 22px -4px rgba(10, 132, 255, .55), 0 3px 10px rgba(0, 0, 0, .45),
-        inset 0 1px 0 rgba(255, 255, 255, .3);
+      box-shadow: 0 8px 18px -6px rgba(31, 90, 67, .55);
       cursor: pointer;
       z-index: 45;
-      transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+      transition: transform .2s var(--ease), opacity .2s var(--ease);
     }
 
     .fab:active {
-      transform: scale(.9);
-      box-shadow: 0 3px 10px -2px rgba(10, 132, 255, .5), 0 1px 4px rgba(0, 0, 0, .4),
-        inset 0 1px 0 rgba(255, 255, 255, .3);
+      transform: scale(.94);
+      opacity: .85;
     }
 
     /* reduced motion means gentler feedback, not none — press/selection states
@@ -1961,9 +1908,9 @@
               <div id="bucketList" style="margin-top:4px;"></div>
               <button class="btn ghost" id="addBucketBtn">הוסף יעד</button>
               <div class="note" id="bucketSumNote" style="display:none; color:var(--status-warning);"></div>
-              <div class="note">כמה מהמשכורת הולך לכל יעד, באחוזים. אפשר לשנות שם ואימוג'י לכל יעד. השורה הראשונה היא
-                הבזבוזים — הסכום שלה הופך אוטומטית לתקציב החודשי. המשכורת נשמרת לכל חודש בנפרד, וחודש חדש מתחיל עם
-                המשכורת של החודש הקודם עד שמשנים אותה.</div>
+              <div class="note">כמה ₪ בחודש את/ה מגביל/ה לכל יעד. אפשר לשנות שם ואימוג'י לכל יעד. השורה הראשונה היא
+                הבזבוזים — זה אותו סכום כמו התקציב החודשי למעלה, ושינוי באחד משנה את השני. המשכורת נשמרת לכל חודש בנפרד,
+                וחודש חדש מתחיל עם המשכורת של החודש הקודם עד שמשנים אותה.</div>
 
               <label style="margin-top:10px;">כתובת ה-Web App של Google Apps Script</label>
               <input id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
@@ -2212,11 +2159,10 @@
       const inEffect = Object.keys(salaries).filter(k => k <= key).sort().pop();
       return inEffect ? salaries[inEffect] : 0;
     }
-    function salaryBudget() {
-      const spend = salaryBuckets.find(b => b.spend);
-      return spend ? salaryFor(budgetMonth()) * spend.pct / 100 : 0;
-    }
-    const effectiveBudget = () => salaryBudget() || parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+    const monthlyBudget = () => parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+    // the spending bucket IS the monthly budget — one number, stored once, so
+    // editing it from either place can't leave the two out of sync
+    const bucketAmount = b => b.spend ? monthlyBudget() : (b.amount || 0);
     const periodLabel = () => activeFilter === 'month' && !isCurrentMonth()
       ? monthName(viewMonth)
       : FILTERS.find(f => f.key === activeFilter).label;
@@ -2226,6 +2172,7 @@
 
     let state = { category: null, amount: '0', note: '' };
     let editingId = null;
+    let justAddedTs = null; // marks the row to animate in on the next render
     let searchQuery = '';
     let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
     let customCategories = JSON.parse(localStorage.getItem('customCategories') || '[]');
@@ -2236,15 +2183,28 @@
     // salary per month, keyed 'yyyy-mm'. A month with no entry of its own
     // inherits the latest earlier one, so a steady salary is entered once.
     let salaries = JSON.parse(localStorage.getItem('salaries') || '{}');
-    // how the salary is split. The `spend` bucket is the one tied to
-    // expenses — its share becomes the monthly budget — so it can be renamed
-    // but never removed.
+    // how the salary is split, as a fixed ₪ amount per month for each bucket.
+    // The `spend` bucket is the one tied to expenses (its amount is the
+    // monthly budget), so it can be renamed but never removed.
     const DEFAULT_BUCKETS = [
-      { id: 'spend', name: 'בזבוזים', emoji: '🛍️', pct: 60, spend: true },
-      { id: 'invest', name: 'השקעות', emoji: '📈', pct: 20 },
-      { id: 'save', name: 'חיסכון', emoji: '🏦', pct: 20 },
+      { id: 'spend', name: 'בזבוזים', emoji: '🛍️', spend: true },
+      { id: 'invest', name: 'השקעות', emoji: '📈', amount: 0 },
+      { id: 'save', name: 'חיסכון', emoji: '🏦', amount: 0 },
     ];
     let salaryBuckets = JSON.parse(localStorage.getItem('salaryBuckets') || 'null') || DEFAULT_BUCKETS;
+    // buckets used to be percentages of the salary — turn each into the ₪
+    // amount it worked out to this month, so nothing the user set is lost
+    function migrateBucketPercents() {
+      if (!salaryBuckets.some(b => b.pct !== undefined)) return;
+      const salary = salaryFor(monthOf(new Date()));
+      salaryBuckets.forEach(b => {
+        const amount = Math.round(salary * (b.pct || 0) / 100);
+        if (b.spend) { if (!monthlyBudget() && amount > 0) saveKey('monthlyBudget', amount); }
+        else b.amount = amount;
+        delete b.pct;
+      });
+      saveKey('salaryBuckets', JSON.stringify(salaryBuckets));
+    }
     let recurCatSelectInst = null;
     let recurDaySelectInst = null;
 
@@ -2326,6 +2286,7 @@
       lastUsedCategoryKey = localStorage.getItem('lastUsedCategoryKey') || null;
       salaries = JSON.parse(localStorage.getItem('salaries') || '{}');
       salaryBuckets = JSON.parse(localStorage.getItem('salaryBuckets') || 'null') || DEFAULT_BUCKETS;
+      migrateBucketPercents();
       renderBucketList();
       buildCatGrid();
       applyDueRecurring();
@@ -2359,6 +2320,7 @@
       populateRecurCatSelect();
       renderCategoryBudgetList();
     }
+    migrateBucketPercents();
     buildCatGrid();
 
     // build keypad
@@ -2440,10 +2402,7 @@
       $('catSheet').classList.add('show');
       $('sheetScrim').classList.add('show');
     }
-    // while a salary sets the budget, a manually typed one would just be ignored
-    $('budgetValueBtn').onclick = () => salaryBudget() > 0
-      ? showToast('התקציב נקבע לפי המשכורת — שנה את אחוז הבזבוזים בחלוקה')
-      : openBudgetEntry();
+    $('budgetValueBtn').onclick = () => openBudgetEntry();
     $('budgetHint').onclick = () => openBudgetEntry();
     $('salaryValueBtn').onclick = openSalaryEntry;
     $('salaryHint').onclick = openSalaryEntry;
@@ -2524,6 +2483,7 @@
             salaries[monthKey(budgetMonth())] = val;
             saveKey('salaries', JSON.stringify(salaries));
             refreshBudgetDisplay();
+            renderBucketSum();
             renderHistory();
           } else if (budgetCategoryKey) {
             if (val > 0) categoryBudgets[budgetCategoryKey] = val;
@@ -2535,7 +2495,9 @@
             if (val > 0) saveKey('monthlyBudget', val);
             else removeKey('monthlyBudget');
             refreshBudgetDisplay();
-            renderBudget();
+            // same number as the spending bucket, so its row and the salary card follow
+            renderBucketList();
+            renderHistory();
           }
           closeSheet();
           showToast();
@@ -2562,13 +2524,14 @@
             };
           }
         } else {
+          justAddedTs = Date.now();
           expenses.unshift({
             category: state.category.key,
             emoji: state.category.emoji,
             amount: parseFloat(state.amount),
             note: noteVal,
             time: new Date().toLocaleString('he-IL'),
-            ts: Date.now()
+            ts: justAddedTs
           });
         }
         lastUsedCategoryKey = state.category.key;
@@ -2736,7 +2699,7 @@
       } else {
         items.forEach(e => {
           const row = document.createElement('div');
-          row.className = 'row';
+          row.className = 'row' + (e.ts === justAddedTs ? ' enter' : '');
           row.innerHTML = `
           <div class="emoji">${escapeHtml(e.emoji)}</div>
           <div class="info">
@@ -2749,6 +2712,7 @@
           list.appendChild(row);
         });
       }
+      justAddedTs = null; // the entrance plays once, not on every later re-render
 
       const total = items.reduce((s, e) => s + e.amount, 0);
       animateTotal(total);
@@ -2802,7 +2766,7 @@
       const myId = ++totalAnimId;
       const start = displayedTotal;
       const startTime = performance.now();
-      const duration = 400;
+      const duration = 900; // an unhurried roll suits the ledger look
       function step(now) {
         if (myId !== totalAnimId) return;
         const t = Math.min((now - startTime) / duration, 1);
@@ -2862,6 +2826,7 @@
         note: last.note || '', time: new Date().toLocaleString('he-IL'), ts: Date.now()
       };
       expenses.unshift(entry);
+      justAddedTs = entry.ts;
       lastUsedCategoryKey = entry.category;
       saveKey('lastUsedCategoryKey', lastUsedCategoryKey);
       buildCatGrid();
@@ -2891,16 +2856,16 @@
       const legend = $('salaryLegend');
       bar.innerHTML = '';
       legend.innerHTML = '';
-      const parts = salaryBuckets.map((b, i) => ({ ...b, color: `var(--series-${(i % 6) + 1})` }));
-      const totalPct = parts.reduce((s, b) => s + b.pct, 0);
-      if (totalPct < 100) parts.push({ name: 'לא מחולק', emoji: '⋯', pct: 100 - totalPct, color: 'var(--sur-hi)' });
+      const parts = salaryBuckets.map((b, i) => ({ ...b, amount: bucketAmount(b), color: `var(--series-${(i % 6) + 1})` }));
+      const allocated = parts.reduce((s, b) => s + b.amount, 0);
+      if (allocated < salary) parts.push({ name: 'לא מחולק', emoji: '⋯', amount: salary - allocated, color: 'var(--sur-hi)' });
 
       parts.forEach(b => {
-        const amount = salary * b.pct / 100;
-        if (b.pct > 0) {
+        const amount = b.amount;
+        if (amount > 0) {
           const seg = document.createElement('div');
           seg.className = 'stack-seg';
-          seg.style.width = (b.pct / Math.max(100, totalPct) * 100) + '%';
+          seg.style.width = (amount / Math.max(salary, allocated) * 100) + '%';
           seg.style.background = b.color;
           bar.appendChild(seg);
         }
@@ -2914,19 +2879,18 @@
         row.innerHTML = `
         <div class="legend-swatch" style="background:${b.color}"></div>
         <div class="legend-name">${escapeHtml(b.emoji)} ${escapeHtml(b.name || 'יעד')} ${tag}</div>
-        <div class="legend-pct">${Number(b.pct.toFixed(1))}%</div>
         <div class="legend-amt">₪${fmtMoney(amount)}</div>`;
         row.onclick = () => { openSettings(); $('scrollArea').scrollTop = 0; };
         legend.appendChild(row);
       });
 
       const note = $('salaryNote');
-      note.style.display = totalPct > 100 ? 'block' : 'none';
-      if (totalPct > 100) note.textContent = `⚠️ החלוקה מגיעה ל-${Number(totalPct.toFixed(1))}% — יותר מכל המשכורת`;
+      note.style.display = allocated > salary ? 'block' : 'none';
+      if (allocated > salary) note.innerHTML = `⚠️ חילקת ${money(allocated - salary)} יותר מהמשכורת`;
     }
 
     function renderBudget() {
-      const budget = effectiveBudget();
+      const budget = monthlyBudget();
       const hint = $('budgetHint');
       const card = $('budgetCard');
 
@@ -3031,9 +2995,8 @@
 
     // settings
     function refreshBudgetDisplay() {
-      const fromSalary = salaryBudget();
-      const b = effectiveBudget();
-      $('budgetValueBtn').textContent = b > 0 ? ('₪' + fmtMoney(b) + (fromSalary > 0 ? ' · לפי המשכורת' : '')) : 'הגדר תקציב';
+      const b = monthlyBudget();
+      $('budgetValueBtn').textContent = b > 0 ? ('₪' + fmtMoney(b)) : 'הגדר תקציב';
       const salary = salaryFor(budgetMonth());
       $('salaryValueBtn').textContent = salary > 0
         ? `₪${fmtMoney(salary)} · ${monthName(budgetMonth())}`
@@ -3171,13 +3134,19 @@
       refreshBudgetDisplay();
       renderHistory();
     }
+    function setBucketAmount(b, val) {
+      if (!b.spend) { b.amount = val; return; }
+      if (val > 0) saveKey('monthlyBudget', val);
+      else removeKey('monthlyBudget');
+    }
     function renderBucketSum() {
-      const total = salaryBuckets.reduce((s, b) => s + b.pct, 0);
+      const salary = salaryFor(budgetMonth());
+      const total = salaryBuckets.reduce((s, b) => s + bucketAmount(b), 0);
       const el = $('bucketSumNote');
-      el.style.display = Math.abs(total - 100) < 0.01 ? 'none' : 'block';
-      el.textContent = total < 100
-        ? `חולקו ${Number(total.toFixed(1))}% — נשארו ${Number((100 - total).toFixed(1))}% לא מחולקים`
-        : `החלוקה מגיעה ל-${Number(total.toFixed(1))}% — יותר מכל המשכורת`;
+      el.style.display = salary > 0 && Math.abs(total - salary) >= 0.01 ? 'block' : 'none';
+      el.innerHTML = total < salary
+        ? `חולקו ${money(total)} מתוך ${money(salary)} — נשארו ${money(salary - total)} לא מחולקים`
+        : `חילקת ${money(total - salary)} יותר מהמשכורת`;
     }
     function renderBucketList() {
       const wrap = $('bucketList');
@@ -3188,21 +3157,21 @@
         row.innerHTML = `
         <input class="b-emoji" maxlength="4" aria-label="אימוג'י">
         <input class="b-name" placeholder="שם היעד" aria-label="שם היעד">
-        <input class="b-pct" inputmode="decimal" aria-label="אחוז מהמשכורת">
-        <span class="pct-sign">%</span>
+        <span class="cur-sign">₪</span>
+        <input class="b-amt" inputmode="decimal" placeholder="0" aria-label="סכום לחודש">
         ${b.spend ? '<span class="remove-spacer"></span>' : '<span class="remove" role="button" aria-label="מחק יעד">✕</span>'}`;
-        const [emojiIn, nameIn, pctIn] = row.querySelectorAll('input');
+        const [emojiIn, nameIn, amtIn] = row.querySelectorAll('input');
         emojiIn.value = b.emoji;
         nameIn.value = b.name;
-        pctIn.value = b.pct;
+        amtIn.value = bucketAmount(b) || '';
         // saved on blur, not per keystroke — a full re-render would steal focus
         emojiIn.onchange = () => { b.emoji = emojiIn.value.trim() || '🎯'; saveBuckets(); };
         nameIn.onchange = () => { b.name = nameIn.value.trim() || 'יעד'; nameIn.value = b.name; saveBuckets(); };
-        pctIn.oninput = () => {
-          b.pct = Math.min(100, Math.max(0, parseFloat(pctIn.value) || 0));
+        amtIn.oninput = () => {
+          setBucketAmount(b, Math.max(0, parseFloat(amtIn.value) || 0));
           renderBucketSum();
         };
-        pctIn.onchange = () => { pctIn.value = b.pct; saveBuckets(); };
+        amtIn.onchange = () => { amtIn.value = bucketAmount(b) || ''; saveBuckets(); };
         const remove = row.querySelector('.remove');
         if (remove) remove.onclick = () => {
           salaryBuckets.splice(i, 1);
@@ -3215,7 +3184,7 @@
     }
 
     $('addBucketBtn').onclick = () => {
-      salaryBuckets.push({ id: Date.now(), name: '', emoji: '🎯', pct: 0 });
+      salaryBuckets.push({ id: Date.now(), name: '', emoji: '🎯', amount: 0 });
       saveBuckets();
       renderBucketList();
       $('bucketList').lastElementChild.querySelector('.b-name').focus();
