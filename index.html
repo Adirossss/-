@@ -189,20 +189,11 @@
       z-index: 50;
     }
 
-    /* not a band of its own: an overlay exactly as tall as the clock area.
-     The page scrolls up underneath it and shows through a light frost, so
-     the clock stays readable over whatever passes below. */
+    /* nothing drawn here: the page runs to the top edge and scrolls straight
+     under the clock, with no band or frost marking off the area (iOS tints
+     the clock itself to stay readable over the content) */
     .status-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 36px;
-      z-index: 20;
-      pointer-events: none;
-      background: color-mix(in srgb, var(--sur-1) 72%, transparent);
-      backdrop-filter: blur(14px) saturate(160%);
-      -webkit-backdrop-filter: blur(14px) saturate(160%);
+      display: none;
     }
 
     /* the whole page (header, budget, chart, list — everything) scrolls together
@@ -249,7 +240,10 @@
       border-radius: 22px 22px 0 0;
       box-shadow: 0 -1px 0 var(--hair), 0 -16px 40px rgba(27, 42, 35, .12);
       padding: 14px 18px 28px;
-      transform: translateY(100%);
+      /* parked a little past 100% so its upward shadow sits fully off-screen
+       too — at exactly 100% the shadow showed as a grey haze along the
+       bottom edge of the light page */
+      transform: translateY(calc(100% + 60px));
       transition: transform .45s var(--ease-drawer);
       z-index: 60;
       max-height: 88%;
@@ -1756,11 +1750,19 @@
        — exactly the bar reported on-device. Leaving height unset here means
        it's derived purely from the fixed top:0/bottom:0 pins, immune to any
        percentage-resolution mismatch. */
+      /* a home-screen web app on recent iOS can resolve the fixed inset:0 box
+       short of the bottom edge, leaving a strip under the page. Sizing by
+       the large viewport (which spans the whole screen in standalone mode)
+       instead of pinning the bottom reaches all the way down. */
       body {
         display: block;
         background: var(--sur-1);
         position: fixed;
-        inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100vh;
+        height: 100lvh;
         overflow: hidden;
       }
 
@@ -1796,10 +1798,6 @@
 
       .notch {
         display: none;
-      }
-
-      .status-bar {
-        height: env(safe-area-inset-top);
       }
 
       .history-header {
@@ -3434,6 +3432,23 @@
     }
     fitPhone();
     window.addEventListener('resize', fitPhone);
+
+    // iOS home-screen apps sometimes lay the page out before the viewport has
+    // settled, and the list then refuses to scroll until something forces a
+    // re-layout (opening settings and coming back did it by accident). Doing
+    // that same nudge ourselves on every launch/return makes it scroll at once.
+    function unstickScroll() {
+      const sa = $('scrollArea');
+      sa.style.overflowY = 'hidden';
+      void sa.offsetHeight;
+      requestAnimationFrame(() => { sa.style.overflowY = ''; });
+    }
+    window.addEventListener('load', () => setTimeout(unstickScroll, 50));
+    window.addEventListener('pageshow', () => setTimeout(unstickScroll, 50));
+    window.addEventListener('resize', unstickScroll);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') setTimeout(unstickScroll, 50);
+    });
 
     // register service worker so the app installs and works offline as a PWA.
     // new versions activate immediately (sw.js calls skipWaiting on its own) and
