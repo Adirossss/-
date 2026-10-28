@@ -8,14 +8,15 @@
   <title>הוצאות</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#f4f6f3">
+  <meta name="theme-color" content="#1f5a43">
   <link rel="icon" href="icon-192.png" type="image/png">
 
   <!-- iOS "Add to Home Screen" support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- light UI: "default" gives dark status-bar text; black-translucent would
-     force white text, unreadable over the pale ledger background -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- full screen: the page draws under the status bar. iOS then forces the
+     clock/battery to white, so the top of the app is the deep green "cover"
+     band (.status-bar + .history-header) that keeps them readable -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="הוצאות">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
@@ -189,10 +190,13 @@
       z-index: 50;
     }
 
+    /* stays pinned while the page scrolls under it, so the white system
+     clock always sits on green */
     .status-bar {
       padding: 16px 28px 4px;
       z-index: 20;
       position: relative;
+      background: var(--accent);
     }
 
     /* the whole page (header, budget, chart, list — everything) scrolls together
@@ -583,8 +587,12 @@
      900-weight title between two outlined circles — the circles read as
      web buttons, and a centred heavy title with no nav context reads as a
      banner. Neither is what an app looks like. */
+    /* the green "cover" continues from the status bar through the title */
     .history-header {
-      padding: 6px var(--gut) 12px;
+      padding: 6px var(--gut) 18px;
+      margin-bottom: 20px;
+      background: var(--accent);
+      color: var(--on-accent);
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -605,13 +613,13 @@
       margin: 0;
       font-weight: 900;
       line-height: 1.15;
-      color: var(--text);
+      color: var(--on-accent);
     }
 
     /* no chrome — the glyph IS the button. 44px stays for the tap target. */
     .header-btn {
       cursor: pointer;
-      color: var(--accent);
+      color: var(--on-accent);
       width: 44px;
       height: 44px;
       border-radius: 50%;
