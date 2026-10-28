@@ -1741,6 +1741,19 @@
         background: var(--sur-1);
       }
 
+      /* iOS 26 home-screen apps (WebKit bug 301108): with viewport-fit=cover
+       and the black-translucent status bar, the viewport comes out short of
+       the screen by the status-bar height while the page is shorter than the
+       screen, and WebKit doesn't paint fixed content past that short edge —
+       so stretching the fixed body can't help. Making the document itself at
+       least screen-tall gets the full viewport back. The min() cap keeps it
+       from overshooting where 100lvh already is the whole screen. */
+      @media (display-mode: standalone) {
+        html {
+          min-height: min(100lvh, calc(100% + env(safe-area-inset-top)));
+        }
+      }
+
       /* body must NOT also get an explicit height:100% here — with top/bottom
        both pinned to 0 via inset AND a height set, the box is over-constrained
        and the spec has the browser recompute 'bottom' instead of stretching
@@ -3437,24 +3450,7 @@
     // settled, and the list then refuses to scroll until something forces a
     // re-layout (opening settings and coming back did it by accident). Doing
     // that same nudge ourselves on every launch/return makes it scroll at once.
-    // Home-screen apps on recent iOS report a viewport (innerHeight, and so
-    // 100% / 100vh / 100lvh) shorter than the physical screen by about the
-    // status-bar height, which left an empty strip under the page. The real
-    // screen size is still known, so when the viewport comes up short the
-    // body is stretched to the full screen explicitly. On devices without
-    // the bug innerHeight already equals it and this changes nothing.
-    function fitStandaloneHeight() {
-      const standalone = navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-      if (!standalone) return;
-      const portrait = window.matchMedia('(orientation: portrait)').matches;
-      const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-      document.body.style.height = Math.max(full, window.innerHeight) + 'px';
-    }
-    fitStandaloneHeight();
-    window.addEventListener('orientationchange', () => setTimeout(fitStandaloneHeight, 300));
-
     function unstickScroll() {
-      fitStandaloneHeight();
       const sa = $('scrollArea');
       sa.style.overflowY = 'hidden';
       void sa.offsetHeight;
