@@ -3437,7 +3437,24 @@
     // settled, and the list then refuses to scroll until something forces a
     // re-layout (opening settings and coming back did it by accident). Doing
     // that same nudge ourselves on every launch/return makes it scroll at once.
+    // Home-screen apps on recent iOS report a viewport (innerHeight, and so
+    // 100% / 100vh / 100lvh) shorter than the physical screen by about the
+    // status-bar height, which left an empty strip under the page. The real
+    // screen size is still known, so when the viewport comes up short the
+    // body is stretched to the full screen explicitly. On devices without
+    // the bug innerHeight already equals it and this changes nothing.
+    function fitStandaloneHeight() {
+      const standalone = navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+      if (!standalone) return;
+      const portrait = window.matchMedia('(orientation: portrait)').matches;
+      const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      document.body.style.height = Math.max(full, window.innerHeight) + 'px';
+    }
+    fitStandaloneHeight();
+    window.addEventListener('orientationchange', () => setTimeout(fitStandaloneHeight, 300));
+
     function unstickScroll() {
+      fitStandaloneHeight();
       const sa = $('scrollArea');
       sa.style.overflowY = 'hidden';
       void sa.offsetHeight;
