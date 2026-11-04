@@ -6,6 +6,13 @@
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>הוצאות</title>
+  <!-- GitHub Pages can't send response headers, so the CSP lives here. Inline
+     script/style stay allowed (the whole app is inline); what this blocks is
+     loading code from any other origin, plugins, <base> hijacking and form
+     posts. connect-src is https: because the sync URL is user-chosen and
+     Apps Script redirects to script.googleusercontent.com. -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#f4f6f3">
@@ -2245,6 +2252,9 @@
     // this, typing something like <img src=x onerror=...> as a note would run as
     // real HTML/JS the next time that row renders (stored XSS via local data).
     const escapeHtml = v => String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    // every sync POST carries the expense data and the sync token, so it must
+    // never go out over plain http (or to a javascript:/data: pseudo-URL).
+    const isSafeSyncUrl = v => { try { return new URL(v).protocol === 'https:'; } catch { return false; } };
 
     // ---------- IndexedDB mirror ----------
     // localStorage stays the primary, synchronous source of truth (nothing about
@@ -3072,7 +3082,12 @@
       $('scrollArea').scrollTop = 0;
     };
     $('saveUrlBtn').onclick = () => {
-      saveKey('sheetUrl', $('sheetUrlInput').value.trim());
+      const url = $('sheetUrlInput').value.trim();
+      if (url && !isSafeSyncUrl(url)) {
+        showToast('הכתובת חייבת להתחיל ב-https://');
+        return;
+      }
+      saveKey('sheetUrl', url);
       saveKey('syncToken', $('syncTokenInput').value.trim());
       $('settingsPanel').classList.remove('show');
       syncSettingsChrome();
@@ -3086,7 +3101,7 @@
     // would require adding CORS headers on the Apps Script side.
     async function syncToSheet(payload) {
       const url = localStorage.getItem('sheetUrl');
-      if (!url) return;
+      if (!url || !isSafeSyncUrl(url)) return;
       if (!navigator.onLine) {
         queueForSync(payload);
         return;
@@ -3108,7 +3123,7 @@
     }
     async function flushPendingSync() {
       const url = localStorage.getItem('sheetUrl');
-      if (!url || !pendingSync.length || !navigator.onLine) return;
+      if (!url || !isSafeSyncUrl(url) || !pendingSync.length || !navigator.onLine) return;
       const remaining = [];
       for (const payload of pendingSync) {
         try {

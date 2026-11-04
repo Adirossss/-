@@ -1,0 +1,11 @@
+# secrets and local config — never commit
+.env
+.env.*
+*.local
+
+# editor / OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.claude/
+node_modules/
