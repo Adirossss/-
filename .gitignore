@@ -12,6 +12,3 @@ node_modules/
 
 # Windows shortcuts
 *.lnk
-
-# Windows shortcuts (contain local paths)
-*.lnk
