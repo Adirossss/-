@@ -9,3 +9,6 @@ Thumbs.db
 .vscode/
 .claude/
 node_modules/
+
+# Windows shortcuts
+*.lnk
